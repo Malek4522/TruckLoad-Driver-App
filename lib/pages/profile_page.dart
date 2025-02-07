@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import '../pages/login_page.dart';
+import '../utils/app_colors.dart';
 
 class ProfilePage extends StatefulWidget {
   final bool isDarkMode;
@@ -47,13 +49,37 @@ class _ProfilePageState extends State<ProfilePage> {
                   ),
                 ),
                 const SizedBox(height: 4),
-                Text(
-                  value,
-                  style: const TextStyle(
-                    fontSize: 15,
-                    fontWeight: FontWeight.w500,
+                if (label == 'Delivery Types')
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: value.split(', ').map((type) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E6B5C).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        type,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          color: Color(0xFF1E6B5C),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    )).toList(),
+                  )
+                else
+                  Text(
+                    value,
+                    style: const TextStyle(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
               ],
             ),
           ),
@@ -96,16 +122,40 @@ class _ProfilePageState extends State<ProfilePage> {
                             color: Colors.white,
                           ),
                         ),
-                        IconButton(
-                          icon: Icon(
-                            widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-                            color: Colors.white,
-                          ),
-                          onPressed: widget.onThemeToggle,
-                          style: IconButton.styleFrom(
-                            backgroundColor: Colors.white.withOpacity(0.2),
-                            padding: const EdgeInsets.all(12),
-                          ),
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: Icon(
+                                widget.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+                                color: Colors.white,
+                              ),
+                              onPressed: widget.onThemeToggle,
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.white.withOpacity(0.2),
+                                padding: const EdgeInsets.all(12),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            IconButton(
+                              icon: const Icon(Icons.logout, color: Colors.white),
+                              onPressed: () {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => LoginPage(
+                                      onLoginSuccess: () {
+                                        // This won't be called as we're logging out
+                                      },
+                                    ),
+                                  ),
+                                );
+                              },
+                              style: IconButton.styleFrom(
+                                backgroundColor: Colors.red.withOpacity(0.8),
+                                padding: const EdgeInsets.all(12),
+                              ),
+                            ),
+                          ],
                         ),
                       ],
                     ),
@@ -235,7 +285,6 @@ class _ProfilePageState extends State<ProfilePage> {
                   ],
                 ),
               ),
-              const SizedBox(height: 16),
               Container(
                 margin: const EdgeInsets.symmetric(horizontal: 16),
                 decoration: BoxDecoration(
@@ -276,10 +325,73 @@ class _ProfilePageState extends State<ProfilePage> {
                       'WA 12345',
                       icon: Icons.badge_outlined,
                     ),
+                    const Divider(height: 32, indent: 16, endIndent: 16),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Text(
+                        'Delivery Capabilities',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ),
                     _buildInfoItem(
-                      'Manufacturing Year',
-                      '2021',
-                      icon: Icons.calendar_today_outlined,
+                      'Maximum Weight',
+                      '1,500 lbs',
+                      icon: Icons.scale_outlined,
+                    ),
+                    _buildInfoItem(
+                      'Maximum Volume',
+                      '12.7 m³',
+                      icon: Icons.view_in_ar_outlined,
+                    ),
+                    _buildInfoItem(
+                      'Cargo Dimensions',
+                      '170" × 70" × 77"',
+                      icon: Icons.straighten_outlined,
+                    ),
+                    _buildInfoItem(
+                      'Temperature Range',
+                      '-4°F to 68°F',
+                      icon: Icons.thermostat_outlined,
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Delivery Types',
+                            style: TextStyle(
+                              color: Colors.grey[600],
+                              fontSize: 13,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: DeliveryType.values.map((type) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1E6B5C).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                type.name,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF1E6B5C),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            )).toList(),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),

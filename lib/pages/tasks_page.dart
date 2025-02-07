@@ -5,6 +5,8 @@ import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
+import 'package:intl/intl.dart';
+import '../models/task.dart';
 
 class TasksPage extends StatefulWidget {
   final String? highlightedTaskId;
@@ -20,87 +22,58 @@ class TasksPage extends StatefulWidget {
 
 class _TasksPageState extends State<TasksPage> {
   final ScrollController _scrollController = ScrollController();
-  final double taskCardHeight = 200; // Approximate height of each task card
+  final double taskCardHeight = 200;
   String _selectedFilter = 'All';
-  final List<String> _filters = ['All', 'Finished', 'Awaiting', 'Assigned'];
+  final List<String> _filters = ['All', 'Pending', 'In Progress', 'Completed'];
   List<LatLng> routePoints = [];
   final PolylinePoints polylinePoints = PolylinePoints();
+  late List<Task> _tasks;
+  String? _expandedTaskId;
 
-  final List<Map<String, dynamic>> _tasks = [
-    {
-      'title': 'Solar Panel',
-      'id': '#GE73895',
-      'type': 'AWAITING',
-      'weight': '54.1 lbs',
-      'price': '€45.00',
-      'company': 'Green Energy ITD',
-      'location': 'Warszawa',
-      'address': 'Warehouse Pickup - Okopowa 17/2, 01-042 Warszawa',
-      'pickupCoords': const LatLng(55.2297, 23.0122),
-      'distance': '55.9 km • 1 hour 1 min EST',
-      'destination': 'Sochaczew',
-      'destinationAddress': 'Warszawska 82, 96-515 Sochaczew',
-      'destinationCoords': const LatLng(52.2297, 20.7810),
-      'status': 'awaiting',
-      'date': 'Today',
-      'time': '15:30',
-    },
-    {
-      'title': 'Fresh Fruits',
-      'id': '#HFF7403',
-      'type': 'ASSIGNED',
-      'weight': '32.6 lbs',
-      'price': '€32.50',
-      'company': 'Happy Fresh Inc',
-      'location': 'Central Market',
-      'address': 'Market Square 123, 00-001 Warszawa',
-      'pickupCoords': const LatLng(52.2369, 21.0127),
-      'distance': '42.3 km • 45 min EST',
-      'destination': 'Fresh Foods Store',
-      'destinationAddress': 'Grocery Street 45, 01-234 Praga',
-      'destinationCoords': const LatLng(52.2550, 21.0394),
-      'status': 'assigned',
-      'date': 'Today',
-      'time': '13:15',
-    },
-    {
-      'title': 'Electronics',
-      'id': '#EL8901',
-      'type': 'FINISHED',
-      'weight': '25.3 lbs',
-      'price': '€38.75',
-      'company': 'Tech Solutions',
-      'location': 'Tech Warehouse',
-      'address': 'Industrial Park 78, 02-345 Wola',
-      'pickupCoords': const LatLng(52.2320, 20.9532),
-      'distance': '38.7 km • 52 min EST',
-      'destination': 'Electronics Store',
-      'destinationAddress': 'Digital Avenue 90, 03-456 Mokotów',
-      'destinationCoords': const LatLng(52.1907, 21.0244),
-      'status': 'finished',
-      'date': 'Yesterday',
-      'time': '16:45',
-    },
-  ];
-
-  List<Map<String, dynamic>> get filteredTasks {
-    if (_selectedFilter == 'All') {
-      return _tasks;
+  @override
+  void initState() {
+    super.initState();
+    _tasks = Task.getSampleTasks();
+    if (widget.highlightedTaskId != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final taskIndex = _tasks.indexWhere(
+          (task) => task.id == widget.highlightedTaskId
+        );
+        if (taskIndex != -1) {
+          _scrollController.animateTo(
+            taskIndex * (taskCardHeight + 16),
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
     }
-    return _tasks.where((task) => 
-      task['type'] == _selectedFilter.toUpperCase()
-    ).toList();
   }
 
   void _handleAcceptTask(String taskId) {
     setState(() {
-      final taskIndex = _tasks.indexWhere((task) => task['id'] == taskId);
+      final taskIndex = _tasks.indexWhere((task) => task.id == taskId);
       if (taskIndex != -1) {
-        _tasks[taskIndex] = {
-          ..._tasks[taskIndex],
-          'type': 'ASSIGNED',
-          'status': 'assigned',
-        };
+        final oldTask = _tasks[taskIndex];
+        _tasks[taskIndex] = Task(
+          id: oldTask.id,
+          title: oldTask.title,
+          description: oldTask.description,
+          pickupDateTime: oldTask.pickupDateTime,
+          deliveryDateTime: oldTask.deliveryDateTime,
+          estimatedDuration: oldTask.estimatedDuration,
+          pickupLocation: oldTask.pickupLocation,
+          deliveryLocation: oldTask.deliveryLocation,
+          deliveryTypes: oldTask.deliveryTypes,
+          status: 'In Progress',
+          amount: oldTask.amount,
+          weight: oldTask.weight,
+          company: oldTask.company,
+          pickupCoords: oldTask.pickupCoords,
+          deliveryCoords: oldTask.deliveryCoords,
+          distance: oldTask.distance,
+          volume: oldTask.volume,
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Task accepted')),
         );
@@ -110,13 +83,28 @@ class _TasksPageState extends State<TasksPage> {
 
   void _handleDeclineTask(String taskId) {
     setState(() {
-      final taskIndex = _tasks.indexWhere((task) => task['id'] == taskId);
+      final taskIndex = _tasks.indexWhere((task) => task.id == taskId);
       if (taskIndex != -1) {
-        _tasks[taskIndex] = {
-          ..._tasks[taskIndex],
-          'type': 'FINISHED',
-          'status': 'finished',
-        };
+        final oldTask = _tasks[taskIndex];
+        _tasks[taskIndex] = Task(
+          id: oldTask.id,
+          title: oldTask.title,
+          description: oldTask.description,
+          pickupDateTime: oldTask.pickupDateTime,
+          deliveryDateTime: oldTask.deliveryDateTime,
+          estimatedDuration: oldTask.estimatedDuration,
+          pickupLocation: oldTask.pickupLocation,
+          deliveryLocation: oldTask.deliveryLocation,
+          deliveryTypes: oldTask.deliveryTypes,
+          status: 'Completed',
+          amount: oldTask.amount,
+          weight: oldTask.weight,
+          company: oldTask.company,
+          pickupCoords: oldTask.pickupCoords,
+          deliveryCoords: oldTask.deliveryCoords,
+          distance: oldTask.distance,
+          volume: oldTask.volume,
+        );
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Task declined')),
         );
@@ -125,35 +113,9 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   @override
-  void initState() {
-    super.initState();
-    if (widget.highlightedTaskId != null) {
-      // Scroll to highlighted task
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        // Find the task index and scroll to it
-        final taskIndex = _tasks.indexWhere(
-          (task) => task['id'] == widget.highlightedTaskId
-        );
-        if (taskIndex != -1) {
-          // You'll need to add a ScrollController to your ListView
-          _scrollController.animateTo(
-            taskIndex * (taskCardHeight + 16), // Approximate position
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-          );
-        }
-      });
-    }
-  }
-
-  @override
-  void dispose() {
-    _scrollController.dispose();
-    super.dispose();
-  }
-
-  @override
   Widget build(BuildContext context) {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -189,7 +151,7 @@ class _TasksPageState extends State<TasksPage> {
                 ),
               ),
               Text(
-                'Dec 30, 2022',
+                DateFormat('MMM dd, yyyy').format(DateTime.now()),
                 style: TextStyle(
                   color: AppColors.getSecondaryTextColor(context),
                 ),
@@ -263,14 +225,13 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   Widget _buildTaskFilters() {
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'My Task',
+            'My Tasks',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -288,29 +249,18 @@ class _TasksPageState extends State<TasksPage> {
                   child: ChoiceChip(
                     label: Text(filter),
                     selected: isSelected,
-                    backgroundColor: isDark ? Colors.grey[800] : Colors.white,
-                    selectedColor: isDark ? Colors.grey[700] : Colors.white,
-                    labelStyle: TextStyle(
-                      color: isSelected 
-                          ? (isDark ? Colors.white : Colors.black)
-                          : AppColors.getSecondaryTextColor(context),
-                      fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-                    ),
-                    padding: const EdgeInsets.symmetric(horizontal: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    side: BorderSide(
-                      color: isSelected 
-                          ? (isDark ? Colors.white : Colors.black)
-                          : (isDark ? Colors.grey[600]! : Colors.grey[300]!),
-                      width: 1,
-                    ),
-                    onSelected: (bool selected) {
-                      setState(() {
-                        _selectedFilter = filter;
-                      });
+                    onSelected: (selected) {
+                      if (selected) {
+                        setState(() => _selectedFilter = filter);
+                      }
                     },
+                    backgroundColor: Theme.of(context).brightness == Brightness.dark
+                        ? Colors.grey[800]
+                        : Colors.white,
+                    selectedColor: Theme.of(context).primaryColor,
+                    labelStyle: TextStyle(
+                      color: isSelected ? Colors.white : null,
+                    ),
                   ),
                 );
               }).toList(),
@@ -322,8 +272,7 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   Widget _buildTasksList() {
-    final tasks = filteredTasks;
-    if (tasks.isEmpty) {
+    if (_tasks.isEmpty) {
       return Center(
         child: Text(
           'No ${_selectedFilter.toLowerCase()} tasks found',
@@ -331,69 +280,25 @@ class _TasksPageState extends State<TasksPage> {
         ),
       );
     }
-    
-    return ListView.separated(
+
+    return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(16),
-      itemCount: tasks.length,
-      separatorBuilder: (context, index) => const SizedBox(height: 16),
+      itemCount: _tasks.length,
       itemBuilder: (context, index) {
-        final task = tasks[index];
-        return _buildTaskCard(
-          title: task['title'],
-          id: task['id'],
-          type: task['type'],
-          weight: task['weight'],
-          price: task['price'],
-          location: task['location'],
-          company: task['company'],
-          address: task['address'],
-          pickupCoords: task['pickupCoords'],
-          distance: task['distance'],
-          destination: task['destination'],
-          destinationAddress: task['destinationAddress'],
-          destinationCoords: task['destinationCoords'],
-          status: task['status'],
-        );
+        final task = _tasks[index];
+        if (_selectedFilter != 'All' && task.status != _selectedFilter) {
+          return const SizedBox.shrink();
+        }
+        return _buildTaskCard(task);
       },
     );
   }
 
-  // Add this property to track expanded task
-  String? _expandedTaskId;
-
-  Widget _buildTaskCard({
-    required String title,
-    required String id,
-    required String type,
-    required String weight,
-    required String price,
-    required String location,
-    required String company,
-    required String address,
-    required LatLng pickupCoords,
-    required String distance,
-    required String destination,
-    required String destinationAddress,
-    required LatLng destinationCoords,
-    required String status,
-  }) {
-    final bool isHighlighted = widget.highlightedTaskId == id;
-    final bool isExpanded = _expandedTaskId == id;
-    
-    Color getTypeColor(String taskType) {
-      final isDark = Theme.of(context).brightness == Brightness.dark;
-      switch (taskType) {
-        case 'AWAITING':
-          return isDark ? Colors.teal : const Color(0xFF1E6B5C);
-        case 'ASSIGNED':
-          return isDark ? Colors.amber : const Color(0xFFFFB74D);
-        case 'FINISHED':
-          return isDark ? Colors.grey[400]! : Colors.grey;
-        default:
-          return isDark ? Colors.grey[400]! : Colors.grey;
-      }
-    }
+  Widget _buildTaskCard(Task task) {
+    final bool isHighlighted = widget.highlightedTaskId == task.id;
+    final bool isExpanded = _expandedTaskId == task.id;
+    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () {
@@ -426,7 +331,10 @@ class _TasksPageState extends State<TasksPage> {
                   SizedBox(
                     height: 300,
                     child: FutureBuilder<List<LatLng>>(
-                      future: getRoutePoints(pickupCoords, destinationCoords),
+                      future: getRoutePoints(
+                        task.pickupCoords,
+                        task.deliveryCoords,
+                      ),
                       builder: (context, snapshot) {
                         if (snapshot.hasData) {
                           routePoints = snapshot.data!;
@@ -434,17 +342,10 @@ class _TasksPageState extends State<TasksPage> {
                         return FlutterMap(
                           options: MapOptions(
                             initialCenter: LatLng(
-                              (pickupCoords.latitude + destinationCoords.latitude) / 2,
-                              (pickupCoords.longitude + destinationCoords.longitude) / 2,
+                              (task.pickupCoords.latitude + task.deliveryCoords.latitude) / 2,
+                              (task.pickupCoords.longitude + task.deliveryCoords.longitude) / 2,
                             ),
-                            initialZoom: 11,  // Reduced zoom to show more area
-                            bounds: LatLngBounds.fromPoints([
-                              pickupCoords,
-                              destinationCoords,
-                            ]),
-                            boundsOptions: const FitBoundsOptions(
-                              padding: EdgeInsets.all(50),
-                            ),
+                            initialZoom: 12,
                           ),
                           children: [
                             TileLayer(
@@ -454,7 +355,9 @@ class _TasksPageState extends State<TasksPage> {
                             PolylineLayer(
                               polylines: [
                                 Polyline(
-                                  points: routePoints.isEmpty ? [pickupCoords, destinationCoords] : routePoints,
+                                  points: routePoints.isEmpty 
+                                      ? [task.pickupCoords, task.deliveryCoords] 
+                                      : routePoints,
                                   color: const Color(0xFF1E6B5C),
                                   strokeWidth: 4.0,
                                 ),
@@ -463,25 +366,28 @@ class _TasksPageState extends State<TasksPage> {
                             MarkerLayer(
                               markers: [
                                 Marker(
-                                  point: pickupCoords,
+                                  point: task.pickupCoords,
                                   width: 80,
                                   height: 80,
-                                  child: Icon(
-                                    Icons.warehouse_outlined,
-                                    color: const Color(0xFF1E6B5C),
+                                  child: const Icon(
+                                    Icons.location_on,
+                                    color: Color(0xFF1E6B5C),
                                     size: 40,
                                   ),
                                 ),
                                 Marker(
                                   point: LatLng(
-                                    (pickupCoords.latitude + destinationCoords.latitude) / 2,
-                                    (pickupCoords.longitude + destinationCoords.longitude) / 2 + 0.01,
+                                    (task.pickupCoords.latitude + task.deliveryCoords.latitude) / 2,
+                                    (task.pickupCoords.longitude + task.deliveryCoords.longitude) / 2 + 0.01,
                                   ),
                                   width: 100,
                                   height: 40,
                                   alignment: Alignment.bottomCenter,
                                   child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
                                     decoration: BoxDecoration(
                                       color: const Color(0xFF1E6B5C),
                                       borderRadius: BorderRadius.circular(12),
@@ -494,7 +400,7 @@ class _TasksPageState extends State<TasksPage> {
                                       ],
                                     ),
                                     child: Text(
-                                      distance,
+                                      task.distance,
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 12,
@@ -504,11 +410,11 @@ class _TasksPageState extends State<TasksPage> {
                                   ),
                                 ),
                                 Marker(
-                                  point: destinationCoords,
+                                  point: task.deliveryCoords,
                                   width: 80,
                                   height: 80,
                                   child: const Icon(
-                                    Icons.warehouse_outlined,
+                                    Icons.flag,
                                     color: Colors.orange,
                                     size: 40,
                                   ),
@@ -523,91 +429,258 @@ class _TasksPageState extends State<TasksPage> {
                   Expanded(
                     child: SingleChildScrollView(
                       controller: scrollController,
-                      child: Padding(
-                        padding: const EdgeInsets.all(16),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              title,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      task.title,
+                                      style: const TextStyle(
+                                        fontSize: 24,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Text(
+                                      task.company,
+                                      style: TextStyle(
+                                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                                        fontSize: 16,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              company,
-                              style: TextStyle(
-                                color: AppColors.getSecondaryTextColor(context),
-                                fontSize: 16,
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                            _buildLocationRow(
-                              icon: Icons.location_on,
-                              iconColor: const Color(0xFF1E6B5C),
-                              title: location,
-                              subtitle: address,
-                              taskId: id,
-                            ),
-                            if (distance.isNotEmpty)
-                              Padding(
-                                padding: const EdgeInsets.only(left: 32),
+                              Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 12,
+                                  vertical: 6,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: task.status == 'Completed'
+                                      ? Colors.green.withOpacity(0.2)
+                                      : task.status == 'In Progress'
+                                          ? Colors.orange.withOpacity(0.2)
+                                          : Colors.blue.withOpacity(0.2),
+                                  borderRadius: BorderRadius.circular(20),
+                                ),
                                 child: Text(
-                                  distance,
-                                  style: const TextStyle(
-                                    color: Color(0xFF1E6B5C),
+                                  task.status,
+                                  style: TextStyle(
+                                    color: task.status == 'Completed'
+                                        ? Colors.green
+                                        : task.status == 'In Progress'
+                                            ? Colors.orange
+                                            : Colors.blue,
                                     fontSize: 12,
-                                    fontWeight: FontWeight.w500,
+                                    fontWeight: FontWeight.bold,
                                   ),
                                 ),
                               ),
-                            const SizedBox(height: 16),
-                            _buildLocationRow(
-                              icon: Icons.location_on_outlined,
-                              iconColor: Colors.orange,
-                              title: destination,
-                              subtitle: destinationAddress,
-                              taskId: id,
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            task.description,
+                            style: TextStyle(
+                              color: Theme.of(context).textTheme.bodyMedium?.color,
+                              fontSize: 16,
                             ),
-                            const SizedBox(height: 24),
-                            if (type == 'AWAITING')
-                              Row(
+                          ),
+                          const SizedBox(height: 16),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            decoration: BoxDecoration(
+                              color: Theme.of(context).cardColor,
+                              borderRadius: BorderRadius.circular(12),
+                              border: Border.all(
+                                color: Colors.grey.withOpacity(0.2),
+                              ),
+                            ),
+                            child: IntrinsicHeight(
+                              child: Row(
                                 children: [
                                   Expanded(
-                                    child: OutlinedButton(
-                                      onPressed: () {
-                                        _handleDeclineTask(id);
-                                        Navigator.pop(context);
-                                      },
-                                      style: OutlinedButton.styleFrom(
-                                        foregroundColor: Colors.red,
-                                        side: const BorderSide(color: Colors.red),
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
-                                      ),
-                                      child: const Text('Reject'),
+                                    flex: 3,
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.inventory_2_outlined, size: 20),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Weight',
+                                                style: TextStyle(
+                                                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                                                  fontSize: 11,
+                                                ),
+                                              ),
+                                              Text(
+                                                task.weight,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 14,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ),
-                                  const SizedBox(width: 16),
+                                  VerticalDivider(
+                                    width: 16,
+                                    thickness: 1,
+                                    color: Colors.grey.withOpacity(0.2),
+                                  ),
                                   Expanded(
-                                    child: ElevatedButton(
-                                      onPressed: () {
-                                        _handleAcceptTask(id);
-                                        Navigator.pop(context);
-                                      },
-                                      style: ElevatedButton.styleFrom(
-                                        backgroundColor: Theme.of(context).primaryColor,
-                                        foregroundColor: Colors.white,
-                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                    flex: 3,
+                                    child: Row(
+                                      children: [
+                                        const Icon(Icons.view_in_ar_outlined, size: 20),
+                                        const SizedBox(width: 8),
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment: CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                'Volume',
+                                                style: TextStyle(
+                                                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                                                  fontSize: 11,
+                                                ),
+                                              ),
+                                              Text(
+                                                task.volume,
+                                                style: const TextStyle(
+                                                  fontWeight: FontWeight.w500,
+                                                  fontSize: 14,
+                                                ),
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  VerticalDivider(
+                                    width: 16,
+                                    thickness: 1,
+                                    color: Colors.grey.withOpacity(0.2),
+                                  ),
+                                  Expanded(
+                                    flex: 2,
+                                    child: Text(
+                                      '\$${task.amount.toStringAsFixed(2)}',
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        fontWeight: FontWeight.bold,
+                                        color: Color(0xFF1E6B5C),
                                       ),
-                                      child: const Text('Pickup Load'),
+                                      textAlign: TextAlign.end,
                                     ),
                                   ),
                                 ],
                               ),
-                          ],
-                        ),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
+                          _buildLocationSection(
+                            'Pickup',
+                            task.pickupLocation,
+                            _formatDateTime(task.pickupDateTime),
+                            Icons.location_on,
+                            const Color(0xFF1E6B5C),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(left: 32),
+                            child: Text(
+                              task.distance,
+                              style: const TextStyle(
+                                color: Color(0xFF1E6B5C),
+                                fontSize: 12,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildLocationSection(
+                            'Delivery',
+                            task.deliveryLocation,
+                            _formatDateTime(task.deliveryDateTime),
+                            Icons.flag,
+                            Colors.orange,
+                          ),
+                          const SizedBox(height: 16),
+                          Wrap(
+                            spacing: 8,
+                            runSpacing: 8,
+                            children: task.deliveryTypes.map((type) => Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFF1E6B5C).withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(8),
+                              ),
+                              child: Text(
+                                type.name,
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Color(0xFF1E6B5C),
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            )).toList(),
+                          ),
+                          const SizedBox(height: 24),
+                          if (task.status == 'Pending')
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      _handleDeclineTask(task.id);
+                                      Navigator.pop(context);
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                      side: const BorderSide(color: Colors.red),
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                    ),
+                                    child: const Text('Decline'),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      _handleAcceptTask(task.id);
+                                      Navigator.pop(context);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF1E6B5C),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                    ),
+                                    child: const Text('Accept'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
                       ),
                     ),
                   ),
@@ -618,14 +691,12 @@ class _TasksPageState extends State<TasksPage> {
         );
       },
       child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 8),
+        margin: const EdgeInsets.only(bottom: 16),
         decoration: BoxDecoration(
-          color: AppColors.getCardColor(context),
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           border: isHighlighted ? Border.all(
-            color: Theme.of(context).brightness == Brightness.dark 
-                ? Colors.tealAccent
-                : Theme.of(context).primaryColor,
+            color: Theme.of(context).primaryColor,
             width: 2,
           ) : null,
           boxShadow: [
@@ -647,12 +718,13 @@ class _TasksPageState extends State<TasksPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        title,
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.getTextColor(context),
+                      Expanded(
+                        child: Text(
+                          task.title,
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ),
                       Container(
@@ -661,15 +733,23 @@ class _TasksPageState extends State<TasksPage> {
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFE8F5F3),
-                          borderRadius: BorderRadius.circular(8),
+                          color: task.status == 'Completed'
+                              ? Colors.green.withOpacity(0.2)
+                              : task.status == 'In Progress'
+                                  ? Colors.orange.withOpacity(0.2)
+                                  : Colors.blue.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          type == 'AWAITING' ? 'PICKUP' : type,
-                          style: const TextStyle(
-                            color: Color(0xFF1E6B5C),
+                          task.status,
+                          style: TextStyle(
+                            color: task.status == 'Completed'
+                                ? Colors.green
+                                : task.status == 'In Progress'
+                                    ? Colors.orange
+                                    : Colors.blue,
                             fontSize: 12,
-                            fontWeight: FontWeight.w600,
+                            fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
@@ -679,60 +759,18 @@ class _TasksPageState extends State<TasksPage> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        children: [
-                          Text(
-                            company,
-                            style: TextStyle(
-                              color: AppColors.getSecondaryTextColor(context),
-                              fontSize: 14,
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          Text(
-                            id,
-                            style: const TextStyle(
-                              color: Colors.orange,
-                              fontSize: 14,
-                              fontWeight: FontWeight.w500,
-                            ),
-                          ),
-                        ],
+                      Text(
+                        _formatDateTime(task.pickupDateTime),
+                        style: TextStyle(
+                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                        ),
                       ),
                       Text(
-                        price,
+                        '\$${task.amount.toStringAsFixed(2)}',
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           color: Color(0xFF1E6B5C),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Text(
-                        'Today',
-                        style: const TextStyle(
-                          color: Color(0xFF1E6B5C),
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        '•',
-                        style: TextStyle(
-                          color: AppColors.getSecondaryTextColor(context),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Text(
-                        'Container, $weight',
-                        style: TextStyle(
-                          color: AppColors.getSecondaryTextColor(context),
-                          fontSize: 14,
                         ),
                       ),
                     ],
@@ -749,7 +787,7 @@ class _TasksPageState extends State<TasksPage> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
-                              Icons.warehouse_outlined,
+                              Icons.location_on,
                               color: Colors.white,
                               size: 20,
                             ),
@@ -766,7 +804,7 @@ class _TasksPageState extends State<TasksPage> {
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
-                              Icons.warehouse_outlined,
+                              Icons.flag,
                               color: Colors.white,
                               size: 20,
                             ),
@@ -778,23 +816,11 @@ class _TasksPageState extends State<TasksPage> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  location,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text(
-                                  address,
-                                  style: TextStyle(
-                                    color: AppColors.getSecondaryTextColor(context),
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              task.pickupLocation,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                             Container(
                               margin: const EdgeInsets.symmetric(vertical: 8),
@@ -803,11 +829,11 @@ class _TasksPageState extends State<TasksPage> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFFE8F5F3),
+                                color: const Color(0xFF1E6B5C).withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
-                                distance,
+                                _formatDuration(task.estimatedDuration),
                                 style: const TextStyle(
                                   color: Color(0xFF1E6B5C),
                                   fontSize: 12,
@@ -815,28 +841,39 @@ class _TasksPageState extends State<TasksPage> {
                                 ),
                               ),
                             ),
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  destination,
-                                  style: const TextStyle(
-                                    fontWeight: FontWeight.w600,
-                                  ),
-                                ),
-                                Text(
-                                  destinationAddress,
-                                  style: TextStyle(
-                                    color: AppColors.getSecondaryTextColor(context),
-                                    fontSize: 13,
-                                  ),
-                                ),
-                              ],
+                            Text(
+                              task.deliveryLocation,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
                             ),
                           ],
                         ),
                       ),
                     ],
+                  ),
+                  const SizedBox(height: 12),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    children: task.deliveryTypes.map((type) => Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 8,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E6B5C).withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(8),
+                      ),
+                      child: Text(
+                        type.name,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Color(0xFF1E6B5C),
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    )).toList(),
                   ),
                 ],
               ),
@@ -847,24 +884,17 @@ class _TasksPageState extends State<TasksPage> {
     );
   }
 
-  Widget _buildLocationRow({
-    required IconData icon,
-    required Color iconColor,
-    required String title,
-    required String subtitle,
-    required String taskId,
-  }) {
+  Widget _buildLocationSection(
+    String title,
+    String location,
+    String datetime,
+    IconData icon,
+    Color color,
+  ) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(
-          icon,
-          color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.teal
-              : iconColor,
-          size: 24
-        ),
-        const SizedBox(width: 8),
+        Icon(icon, color: color, size: 24),
+        const SizedBox(width: 16),
         Expanded(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -872,17 +902,22 @@ class _TasksPageState extends State<TasksPage> {
               Text(
                 title,
                 style: TextStyle(
-                  fontWeight: FontWeight.w600,
-                  fontSize: 14,
-                  color: AppColors.getTextColor(context),
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                  fontSize: 12,
                 ),
               ),
-              const SizedBox(height: 2),
               Text(
-                subtitle,
+                location,
+                style: const TextStyle(
+                  fontWeight: FontWeight.w500,
+                  fontSize: 16,
+                ),
+              ),
+              Text(
+                datetime,
                 style: TextStyle(
-                  color: AppColors.getSecondaryTextColor(context),
-                  fontSize: 13,
+                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                  fontSize: 12,
                 ),
               ),
             ],
@@ -890,6 +925,16 @@ class _TasksPageState extends State<TasksPage> {
         ),
       ],
     );
+  }
+
+  String _formatDateTime(DateTime dateTime) {
+    return DateFormat('MMM dd, HH:mm').format(dateTime);
+  }
+
+  String _formatDuration(Duration duration) {
+    final hours = duration.inHours;
+    final minutes = duration.inMinutes.remainder(60);
+    return '${hours}h ${minutes}m';
   }
 
   Future<List<LatLng>> getRoutePoints(LatLng start, LatLng end) async {

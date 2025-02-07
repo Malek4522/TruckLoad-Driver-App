@@ -1,27 +1,45 @@
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'pages/tasks_page.dart';
 import 'pages/transactions_page.dart';
 import 'pages/profile_page.dart';
+import 'pages/login_page.dart';
 import 'utils/app_colors.dart';
 
-void main() {
-  runApp(const MyApp());
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  final prefs = await SharedPreferences.getInstance();
+  final isDarkMode = prefs.getBool('isDarkMode') ?? false;
+  runApp(MyApp(initialDarkMode: isDarkMode));
 }
 
 class MyApp extends StatefulWidget {
-  const MyApp({super.key});
+  final bool initialDarkMode;
+  
+  const MyApp({
+    super.key,
+    required this.initialDarkMode,
+  });
 
   @override
   State<MyApp> createState() => _MyAppState();
 }
 
 class _MyAppState extends State<MyApp> {
-  bool isDarkMode = false;
+  late bool isDarkMode;
 
-  void toggleTheme() {
+  @override
+  void initState() {
+    super.initState();
+    isDarkMode = widget.initialDarkMode;
+  }
+
+  void toggleTheme() async {
     setState(() {
       isDarkMode = !isDarkMode;
     });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('isDarkMode', isDarkMode);
   }
 
   @override
@@ -54,6 +72,24 @@ class _MyAppState extends State<MyApp> {
         ),
         useMaterial3: true,
       ),
+      // Option 1: Start with Login Page
+      /*home: Builder(
+        builder: (context) => LoginPage(
+          onLoginSuccess: () {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => ResponsiveLayout(
+                  isDarkMode: isDarkMode,
+                  onThemeToggle: toggleTheme,
+                ),
+              ),
+            );
+          },
+        ),
+      ),*/
+      
+      // Option 2: Start with Tasks Page (ResponsiveLayout)
       home: ResponsiveLayout(
         isDarkMode: isDarkMode,
         onThemeToggle: toggleTheme,

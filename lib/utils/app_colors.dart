@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
 
+enum DeliveryType {
+  COLD,         // Cold
+  COVERED,      // Covered Goods
+  FRAGILE,      // Fragile Items
+  LIQUID,       // Liquid
+  FLAMBLE       // Flamble
+}
+
 class AppColors {
   static const Color primaryGreen = Color(0xFF1E6B5C);
   
