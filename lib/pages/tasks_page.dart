@@ -34,6 +34,8 @@ class _TasksPageState extends State<TasksPage> {
       'destination': 'Sochaczew',
       'destinationAddress': 'Warszawska 82, 96-515 Sochaczew',
       'status': 'awaiting',
+      'date': 'Today',
+      'time': '15:30',
     },
     {
       'title': 'Fresh Fruits',
@@ -48,6 +50,8 @@ class _TasksPageState extends State<TasksPage> {
       'destination': 'Fresh Foods Store',
       'destinationAddress': 'Grocery Street 45, 01-234 Praga',
       'status': 'assigned',
+      'date': 'Today',
+      'time': '13:15',
     },
     {
       'title': 'Electronics',
@@ -62,6 +66,8 @@ class _TasksPageState extends State<TasksPage> {
       'destination': 'Electronics Store',
       'destinationAddress': 'Digital Avenue 90, 03-456 Mokotów',
       'status': 'finished',
+      'date': 'Yesterday',
+      'time': '16:45',
     },
   ];
 
@@ -376,7 +382,9 @@ class _TasksPageState extends State<TasksPage> {
         borderRadius: BorderRadius.circular(16),
         border: isHighlighted 
           ? Border.all(
-              color: Theme.of(context).primaryColor,
+              color: Theme.of(context).brightness == Brightness.dark 
+                  ? Colors.tealAccent  // More visible in dark mode
+                  : Theme.of(context).primaryColor,
               width: 2,
             )
           : null,
