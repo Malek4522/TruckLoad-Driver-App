@@ -2,6 +2,70 @@ import 'package:flutter/material.dart';
 import 'package:latlong2/latlong.dart';
 import '../utils/app_colors.dart';
 
+enum TaskStatus {
+  AWAITING,
+  REJECTED,
+  IN_WAY,
+  ARRIVED,
+  COMPLETED,
+  ACCIDENT
+}
+
+extension TaskStatusExtension on TaskStatus {
+  String get displayName {
+    switch (this) {
+      case TaskStatus.AWAITING:
+        return 'Awaiting';
+      case TaskStatus.REJECTED:
+        return 'Rejected';
+      case TaskStatus.IN_WAY:
+        return 'In Way';
+      case TaskStatus.ARRIVED:
+        return 'Arrived';
+      case TaskStatus.COMPLETED:
+        return 'Completed';
+      case TaskStatus.ACCIDENT:
+        return 'Accident';
+    }
+  }
+
+  Color get color {
+    switch (this) {
+      case TaskStatus.AWAITING:
+        return Colors.blue;
+      case TaskStatus.REJECTED:
+        return Colors.red;
+      case TaskStatus.IN_WAY:
+        return Colors.orange;
+      case TaskStatus.ARRIVED:
+        return Colors.amber;
+      case TaskStatus.COMPLETED:
+        return Colors.green;
+      case TaskStatus.ACCIDENT:
+        return Colors.red;
+    }
+  }
+
+  bool get canProgress {
+    return this != TaskStatus.REJECTED && 
+           this != TaskStatus.COMPLETED && 
+           this != TaskStatus.ACCIDENT;
+  }
+
+  TaskStatus? get nextStatus {
+    switch (this) {
+      case TaskStatus.AWAITING:
+        return TaskStatus.IN_WAY;
+      case TaskStatus.IN_WAY:
+        return TaskStatus.ARRIVED;
+      case TaskStatus.ARRIVED:
+        return TaskStatus.COMPLETED;
+      default:
+        return null;
+    }
+  }
+}
+
 class Task {
   final String id;
   final String title;
@@ -12,7 +76,7 @@ class Task {
   final String pickupLocation;
   final String deliveryLocation;
   final List<DeliveryType> deliveryTypes;
-  final String status;
+  final TaskStatus status;
   final double amount;
   // Old task data
   final String weight;
@@ -42,6 +106,46 @@ class Task {
     required this.volume,
   });
 
+  Task copyWith({
+    String? id,
+    String? title,
+    String? description,
+    DateTime? pickupDateTime,
+    DateTime? deliveryDateTime,
+    Duration? estimatedDuration,
+    String? pickupLocation,
+    String? deliveryLocation,
+    List<DeliveryType>? deliveryTypes,
+    TaskStatus? status,
+    double? amount,
+    String? weight,
+    String? company,
+    LatLng? pickupCoords,
+    LatLng? deliveryCoords,
+    String? distance,
+    String? volume,
+  }) {
+    return Task(
+      id: id ?? this.id,
+      title: title ?? this.title,
+      description: description ?? this.description,
+      pickupDateTime: pickupDateTime ?? this.pickupDateTime,
+      deliveryDateTime: deliveryDateTime ?? this.deliveryDateTime,
+      estimatedDuration: estimatedDuration ?? this.estimatedDuration,
+      pickupLocation: pickupLocation ?? this.pickupLocation,
+      deliveryLocation: deliveryLocation ?? this.deliveryLocation,
+      deliveryTypes: deliveryTypes ?? this.deliveryTypes,
+      status: status ?? this.status,
+      amount: amount ?? this.amount,
+      weight: weight ?? this.weight,
+      company: company ?? this.company,
+      pickupCoords: pickupCoords ?? this.pickupCoords,
+      deliveryCoords: deliveryCoords ?? this.deliveryCoords,
+      distance: distance ?? this.distance,
+      volume: volume ?? this.volume,
+    );
+  }
+
   // Sample tasks for testing
   static List<Task> getSampleTasks() {
     return [
@@ -55,7 +159,7 @@ class Task {
         pickupLocation: '123 Farm Road, Rural Area',
         deliveryLocation: '456 Market Street, City Center',
         deliveryTypes: [DeliveryType.COLD, DeliveryType.FRAGILE],
-        status: 'Pending',
+        status: TaskStatus.AWAITING,
         amount: 150.0,
         weight: '54.1 lbs',
         volume: '3.4 m³',
@@ -74,7 +178,7 @@ class Task {
         pickupLocation: '789 Warehouse Ave, Industrial Zone',
         deliveryLocation: '321 Construction Site, New Development',
         deliveryTypes: [DeliveryType.COVERED],
-        status: 'Assigned',
+        status: TaskStatus.IN_WAY,
         amount: 300.0,
         weight: '250.0 lbs',
         volume: '9.9 m³',
@@ -93,7 +197,7 @@ class Task {
         pickupLocation: '567 Medical Depot, Healthcare District',
         deliveryLocation: '890 City Hospital, Downtown',
         deliveryTypes: [DeliveryType.FRAGILE],
-        status: 'In Progress',
+        status: TaskStatus.ARRIVED,
         amount: 200.0,
         weight: '32.6 lbs',
         volume: '2.3 m³',

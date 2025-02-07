@@ -3,7 +3,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'pages/tasks_page.dart';
 import 'pages/transactions_page.dart';
 import 'pages/profile_page.dart';
-import 'pages/login_page.dart';
+//import 'pages/login_page.dart';
 import 'utils/app_colors.dart';
 
 void main() async {

@@ -24,7 +24,7 @@ class _TasksPageState extends State<TasksPage> {
   final ScrollController _scrollController = ScrollController();
   final double taskCardHeight = 200;
   String _selectedFilter = 'All';
-  final List<String> _filters = ['All', 'Pending', 'In Progress', 'Completed'];
+  final List<String> _filters = ['All', ...TaskStatus.values.map((e) => e.displayName)];
   List<LatLng> routePoints = [];
   final PolylinePoints polylinePoints = PolylinePoints();
   late List<Task> _tasks;
@@ -55,25 +55,7 @@ class _TasksPageState extends State<TasksPage> {
       final taskIndex = _tasks.indexWhere((task) => task.id == taskId);
       if (taskIndex != -1) {
         final oldTask = _tasks[taskIndex];
-        _tasks[taskIndex] = Task(
-          id: oldTask.id,
-          title: oldTask.title,
-          description: oldTask.description,
-          pickupDateTime: oldTask.pickupDateTime,
-          deliveryDateTime: oldTask.deliveryDateTime,
-          estimatedDuration: oldTask.estimatedDuration,
-          pickupLocation: oldTask.pickupLocation,
-          deliveryLocation: oldTask.deliveryLocation,
-          deliveryTypes: oldTask.deliveryTypes,
-          status: 'In Progress',
-          amount: oldTask.amount,
-          weight: oldTask.weight,
-          company: oldTask.company,
-          pickupCoords: oldTask.pickupCoords,
-          deliveryCoords: oldTask.deliveryCoords,
-          distance: oldTask.distance,
-          volume: oldTask.volume,
-        );
+        _tasks[taskIndex] = oldTask.copyWith(status: TaskStatus.IN_WAY);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Task accepted')),
         );
@@ -86,27 +68,41 @@ class _TasksPageState extends State<TasksPage> {
       final taskIndex = _tasks.indexWhere((task) => task.id == taskId);
       if (taskIndex != -1) {
         final oldTask = _tasks[taskIndex];
-        _tasks[taskIndex] = Task(
-          id: oldTask.id,
-          title: oldTask.title,
-          description: oldTask.description,
-          pickupDateTime: oldTask.pickupDateTime,
-          deliveryDateTime: oldTask.deliveryDateTime,
-          estimatedDuration: oldTask.estimatedDuration,
-          pickupLocation: oldTask.pickupLocation,
-          deliveryLocation: oldTask.deliveryLocation,
-          deliveryTypes: oldTask.deliveryTypes,
-          status: 'Completed',
-          amount: oldTask.amount,
-          weight: oldTask.weight,
-          company: oldTask.company,
-          pickupCoords: oldTask.pickupCoords,
-          deliveryCoords: oldTask.deliveryCoords,
-          distance: oldTask.distance,
-          volume: oldTask.volume,
-        );
+        _tasks[taskIndex] = oldTask.copyWith(status: TaskStatus.REJECTED);
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Task declined')),
+        );
+      }
+    });
+  }
+
+  void _handleProgressTask(String taskId) {
+    setState(() {
+      final taskIndex = _tasks.indexWhere((task) => task.id == taskId);
+      if (taskIndex != -1) {
+        final oldTask = _tasks[taskIndex];
+        final nextStatus = oldTask.status.nextStatus;
+        if (nextStatus != null) {
+          _tasks[taskIndex] = oldTask.copyWith(status: nextStatus);
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Task status updated to ${nextStatus.displayName}')),
+          );
+        }
+      }
+    });
+  }
+
+  void _handleAccident(String taskId) {
+    setState(() {
+      final taskIndex = _tasks.indexWhere((task) => task.id == taskId);
+      if (taskIndex != -1) {
+        final oldTask = _tasks[taskIndex];
+        _tasks[taskIndex] = oldTask.copyWith(status: TaskStatus.ACCIDENT);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Task marked as accident'),
+            backgroundColor: Colors.red,
+          ),
         );
       }
     });
@@ -226,7 +222,7 @@ class _TasksPageState extends State<TasksPage> {
 
   Widget _buildTaskFilters() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -239,31 +235,48 @@ class _TasksPageState extends State<TasksPage> {
             ),
           ),
           const SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              children: _filters.map((filter) {
+          SizedBox(
+            height: 40,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _filters.length,
+              itemBuilder: (context, index) {
+                final filter = _filters[index];
                 final isSelected = _selectedFilter == filter;
+                final taskStatus = filter == 'All' 
+                    ? null 
+                    : TaskStatus.values.firstWhere(
+                        (status) => status.displayName == filter
+                      );
+
                 return Padding(
                   padding: const EdgeInsets.only(right: 8),
-                  child: ChoiceChip(
-                    label: Text(filter),
+                  child: FilterChip(
+                    label: Text(
+                      filter,
+                      style: TextStyle(
+                        color: isSelected 
+                            ? Colors.white 
+                            : taskStatus?.color ?? Theme.of(context).textTheme.bodyMedium?.color,
+                        fontWeight: isSelected ? FontWeight.bold : null,
+                      ),
+                    ),
                     selected: isSelected,
                     onSelected: (selected) {
                       if (selected) {
                         setState(() => _selectedFilter = filter);
                       }
                     },
-                    backgroundColor: Theme.of(context).brightness == Brightness.dark
-                        ? Colors.grey[800]
-                        : Colors.white,
-                    selectedColor: Theme.of(context).primaryColor,
-                    labelStyle: TextStyle(
-                      color: isSelected ? Colors.white : null,
-                    ),
+                    backgroundColor: taskStatus?.color.withOpacity(0.1) ?? 
+                        (Theme.of(context).brightness == Brightness.dark
+                            ? Colors.grey[800]
+                            : Colors.white),
+                    selectedColor: taskStatus?.color ?? Theme.of(context).primaryColor,
+                    padding: const EdgeInsets.symmetric(horizontal: 4),
+                    showCheckmark: false,
                   ),
                 );
-              }).toList(),
+              },
             ),
           ),
         ],
@@ -272,11 +285,30 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   Widget _buildTasksList() {
-    if (_tasks.isEmpty) {
+    final filteredTasks = _tasks.where((task) {
+      if (_selectedFilter == 'All') return true;
+      return task.status.displayName == _selectedFilter;
+    }).toList();
+
+    if (filteredTasks.isEmpty) {
       return Center(
-        child: Text(
-          'No ${_selectedFilter.toLowerCase()} tasks found',
-          style: TextStyle(color: AppColors.getSecondaryTextColor(context)),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(
+              Icons.assignment_outlined,
+              size: 48,
+              color: Colors.grey[400],
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No ${_selectedFilter.toLowerCase()} tasks found',
+              style: TextStyle(
+                color: AppColors.getSecondaryTextColor(context),
+                fontSize: 16,
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -284,14 +316,8 @@ class _TasksPageState extends State<TasksPage> {
     return ListView.builder(
       controller: _scrollController,
       padding: const EdgeInsets.all(16),
-      itemCount: _tasks.length,
-      itemBuilder: (context, index) {
-        final task = _tasks[index];
-        if (_selectedFilter != 'All' && task.status != _selectedFilter) {
-          return const SizedBox.shrink();
-        }
-        return _buildTaskCard(task);
-      },
+      itemCount: filteredTasks.length,
+      itemBuilder: (context, index) => _buildTaskCard(filteredTasks[index]),
     );
   }
 
@@ -472,7 +498,7 @@ class _TasksPageState extends State<TasksPage> {
                                   borderRadius: BorderRadius.circular(20),
                                 ),
                                 child: Text(
-                                  task.status,
+                                  task.status.displayName,
                                   style: TextStyle(
                                     color: task.status == 'Completed'
                                         ? Colors.green
@@ -646,7 +672,7 @@ class _TasksPageState extends State<TasksPage> {
                             )).toList(),
                           ),
                           const SizedBox(height: 24),
-                          if (task.status == 'Pending')
+                          if (task.status == TaskStatus.AWAITING)
                             Row(
                               children: [
                                 Expanded(
@@ -676,6 +702,46 @@ class _TasksPageState extends State<TasksPage> {
                                       padding: const EdgeInsets.symmetric(vertical: 16),
                                     ),
                                     child: const Text('Accept'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          if (task.status.canProgress && task.status != TaskStatus.AWAITING)
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      _handleAccident(task.id);
+                                      Navigator.pop(context);
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                      side: const BorderSide(color: Colors.red),
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                    ),
+                                    child: const Text('Report Accident'),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      _handleProgressTask(task.id);
+                                      Navigator.pop(context);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: const Color(0xFF1E6B5C),
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 16),
+                                    ),
+                                    child: Text(
+                                      task.status == TaskStatus.IN_WAY
+                                          ? 'Mark as Arrived'
+                                          : task.status == TaskStatus.ARRIVED
+                                              ? 'Mark as Completed'
+                                              : 'Progress Task'
+                                    ),
                                   ),
                                 ),
                               ],
@@ -741,7 +807,7 @@ class _TasksPageState extends State<TasksPage> {
                           borderRadius: BorderRadius.circular(20),
                         ),
                         child: Text(
-                          task.status,
+                          task.status.displayName,
                           style: TextStyle(
                             color: task.status == 'Completed'
                                 ? Colors.green
