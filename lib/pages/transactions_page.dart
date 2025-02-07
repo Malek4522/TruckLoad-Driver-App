@@ -28,7 +28,6 @@ class _TransactionsPageState extends State<TransactionsPage> with SingleTickerPr
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -61,7 +60,7 @@ class _TransactionsPageState extends State<TransactionsPage> with SingleTickerPr
                     Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withAlpha(26),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Row(
@@ -73,7 +72,7 @@ class _TransactionsPageState extends State<TransactionsPage> with SingleTickerPr
                               Text(
                                 loc.get('total_earnings'),
                                 style: TextStyle(
-                                  color: Colors.white.withOpacity(0.8),
+                                  color: Colors.white.withAlpha(204),
                                   fontSize: 14,
                                 ),
                               ),
@@ -91,7 +90,7 @@ class _TransactionsPageState extends State<TransactionsPage> with SingleTickerPr
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
+                              color: Colors.white.withAlpha(51),
                               shape: BoxShape.circle,
                             ),
                             child: const Icon(
@@ -327,7 +326,7 @@ class _TransactionsPageState extends State<TransactionsPage> with SingleTickerPr
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withAlpha(26),
         borderRadius: BorderRadius.circular(16),
       ),
       child: Column(
@@ -339,7 +338,7 @@ class _TransactionsPageState extends State<TransactionsPage> with SingleTickerPr
               Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
-                  color: color.withOpacity(0.2),
+                  color: color.withAlpha(51),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -422,7 +421,7 @@ class _TransactionsPageState extends State<TransactionsPage> with SingleTickerPr
           borderRadius: BorderRadius.circular(16),
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.05),
+              color: Colors.black.withAlpha(13),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -480,7 +479,7 @@ class _TransactionsPageState extends State<TransactionsPage> with SingleTickerPr
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1E6B5C).withOpacity(0.1),
+                              color: const Color(0xFF1E6B5C).withAlpha(26),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
@@ -499,7 +498,7 @@ class _TransactionsPageState extends State<TransactionsPage> with SingleTickerPr
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: getStatusColor().withOpacity(0.1),
+                              color: getStatusColor().withAlpha(26),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(

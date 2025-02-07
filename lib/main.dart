@@ -4,7 +4,6 @@ import 'package:flutter_localizations/flutter_localizations.dart';
 import 'pages/tasks_page.dart';
 import 'pages/transactions_page.dart';
 import 'pages/profile_page.dart';
-//import 'pages/login_page.dart';
 import 'utils/app_colors.dart';
 import 'utils/app_localizations.dart';
 

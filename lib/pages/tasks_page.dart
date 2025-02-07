@@ -29,7 +29,6 @@ class _TasksPageState extends State<TasksPage> {
   List<LatLng> routePoints = [];
   final PolylinePoints polylinePoints = PolylinePoints();
   late List<Task> _tasks;
-  String? _expandedTaskId;
 
   @override
   void initState() {
@@ -112,7 +111,6 @@ class _TasksPageState extends State<TasksPage> {
   @override
   Widget build(BuildContext context) {
     final loc = AppLocalizations.of(context);
-    final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -324,10 +322,7 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   Widget _buildTaskCard(BuildContext context, Task task) {
-    final loc = AppLocalizations.of(context);
     final bool isHighlighted = widget.highlightedTaskId == task.id;
-    final bool isExpanded = _expandedTaskId == task.id;
-    final isDark = Theme.of(context).brightness == Brightness.dark;
 
     return GestureDetector(
       onTap: () {
