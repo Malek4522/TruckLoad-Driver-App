@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../utils/app_colors.dart';
+import '../utils/app_localizations.dart';
 
 class LoginPage extends StatefulWidget {
   final VoidCallback onLoginSuccess;
@@ -22,6 +23,8 @@ class _LoginPageState extends State<LoginPage> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
@@ -33,7 +36,7 @@ class _LoginPageState extends State<LoginPage> {
               children: [
                 const SizedBox(height: 40),
                 Text(
-                  'Welcome Back',
+                  loc.get('welcome_back'),
                   style: TextStyle(
                     fontSize: 32,
                     fontWeight: FontWeight.bold,
@@ -42,7 +45,7 @@ class _LoginPageState extends State<LoginPage> {
                 ),
                 const SizedBox(height: 8),
                 Text(
-                  'Sign in to continue',
+                  loc.get('sign_in'),
                   style: TextStyle(
                     fontSize: 16,
                     color: AppColors.getSecondaryTextColor(context),
@@ -86,7 +89,7 @@ class _LoginPageState extends State<LoginPage> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
-                                      'Email',
+                                      loc.get('email'),
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         color: _isEmailLogin 
@@ -110,7 +113,7 @@ class _LoginPageState extends State<LoginPage> {
                                       borderRadius: BorderRadius.circular(8),
                                     ),
                                     child: Text(
-                                      'Phone',
+                                      loc.get('phone'),
                                       textAlign: TextAlign.center,
                                       style: TextStyle(
                                         color: !_isEmailLogin 
@@ -134,7 +137,8 @@ class _LoginPageState extends State<LoginPage> {
                                 TextFormField(
                                   controller: _emailController,
                                   decoration: InputDecoration(
-                                    labelText: 'Email',
+                                    labelText: loc.get('email'),
+                                    hintText: loc.get('email_placeholder'),
                                     prefixIcon: const Icon(Icons.email_outlined),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
@@ -143,7 +147,7 @@ class _LoginPageState extends State<LoginPage> {
                                   keyboardType: TextInputType.emailAddress,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      return 'Please enter your email';
+                                      return loc.get('email_placeholder');
                                     }
                                     return null;
                                   },
@@ -152,7 +156,8 @@ class _LoginPageState extends State<LoginPage> {
                                 TextFormField(
                                   controller: _phoneController,
                                   decoration: InputDecoration(
-                                    labelText: 'Phone Number',
+                                    labelText: loc.get('phone'),
+                                    hintText: loc.get('phone_placeholder'),
                                     prefixIcon: const Icon(Icons.phone_outlined),
                                     border: OutlineInputBorder(
                                       borderRadius: BorderRadius.circular(12),
@@ -161,7 +166,7 @@ class _LoginPageState extends State<LoginPage> {
                                   keyboardType: TextInputType.phone,
                                   validator: (value) {
                                     if (value == null || value.isEmpty) {
-                                      return 'Please enter your phone number';
+                                      return loc.get('phone_placeholder');
                                     }
                                     return null;
                                   },
@@ -170,7 +175,8 @@ class _LoginPageState extends State<LoginPage> {
                               TextFormField(
                                 controller: _passwordController,
                                 decoration: InputDecoration(
-                                  labelText: 'Password',
+                                  labelText: loc.get('password'),
+                                  hintText: loc.get('password_placeholder'),
                                   prefixIcon: const Icon(Icons.lock_outline),
                                   border: OutlineInputBorder(
                                     borderRadius: BorderRadius.circular(12),
@@ -179,7 +185,7 @@ class _LoginPageState extends State<LoginPage> {
                                 obscureText: true,
                                 validator: (value) {
                                   if (value == null || value.isEmpty) {
-                                    return 'Please enter your password';
+                                    return loc.get('password_placeholder');
                                   }
                                   return null;
                                 },
@@ -204,9 +210,9 @@ class _LoginPageState extends State<LoginPage> {
                                 borderRadius: BorderRadius.circular(12),
                               ),
                             ),
-                            child: const Text(
-                              'Sign In',
-                              style: TextStyle(
+                            child: Text(
+                              loc.get('sign_in_button'),
+                              style: const TextStyle(
                                 fontSize: 16,
                                 fontWeight: FontWeight.bold,
                               ),

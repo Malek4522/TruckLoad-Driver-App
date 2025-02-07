@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'tasks_page.dart';
 import '../utils/app_colors.dart';
+import '../utils/app_localizations.dart';
 
 class TransactionsPage extends StatefulWidget {
   const TransactionsPage({super.key});
@@ -22,6 +23,299 @@ class _TransactionsPageState extends State<TransactionsPage> with SingleTickerPr
   void dispose() {
     _tabController.dispose();
     super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
+    final isDark = Theme.of(context).brightness == Brightness.dark;
+    
+    return Scaffold(
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+      body: SafeArea(
+        child: SingleChildScrollView(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(16),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).primaryColor,
+                  borderRadius: const BorderRadius.only(
+                    bottomLeft: Radius.circular(24),
+                    bottomRight: Radius.circular(24),
+                  ),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      loc.get('transactions'),
+                      style: const TextStyle(
+                        fontSize: 28,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                loc.get('total_earnings'),
+                                style: TextStyle(
+                                  color: Colors.white.withOpacity(0.8),
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              const Text(
+                                '\$1,248.30',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.white.withOpacity(0.2),
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(
+                              Icons.account_balance_wallet_outlined,
+                              color: Colors.white,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      loc.get('insights'),
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.getTextColor(context),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    GridView.count(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      crossAxisCount: 2,
+                      mainAxisSpacing: 16,
+                      crossAxisSpacing: 16,
+                      childAspectRatio: 1.8,
+                      children: [
+                        _buildInsightCard(
+                          title: loc.get('today_earnings'),
+                          amount: '\$116.25',
+                          icon: Icons.today,
+                          color: Colors.blue,
+                        ),
+                        _buildInsightCard(
+                          title: loc.get('pending_amount'),
+                          amount: '\$45.00',
+                          icon: Icons.pending,
+                          color: Colors.orange,
+                        ),
+                        _buildInsightCard(
+                          title: loc.get('last_month'),
+                          amount: '\$3,542.80',
+                          icon: Icons.calendar_month,
+                          color: Colors.purple,
+                        ),
+                        _buildInsightCard(
+                          title: loc.get('avg_per_day'),
+                          amount: '\$118.09',
+                          icon: Icons.analytics,
+                          color: Colors.green,
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                children: [
+                  TabBar(
+                    controller: _tabController,
+                    labelColor: Theme.of(context).brightness == Brightness.dark 
+                        ? Colors.white 
+                        : Theme.of(context).primaryColor,
+                    unselectedLabelColor: AppColors.getSecondaryTextColor(context),
+                    indicator: BoxDecoration(
+                      border: Border(
+                        bottom: BorderSide(
+                          color: Theme.of(context).brightness == Brightness.dark 
+                              ? Colors.white 
+                              : Theme.of(context).primaryColor,
+                          width: 2,
+                        ),
+                      ),
+                    ),
+                    tabs: [
+                      Tab(text: loc.get('active')),
+                      Tab(text: loc.get('history')),
+                    ],
+                  ),
+                  [
+                    // Active transactions
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            loc.get('active'),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.getTextColor(context),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            children: [
+                              _buildTransactionCard(
+                                context,
+                                date: loc.get('today'),
+                                time: '15:30',
+                                taskId: '#GE73895',
+                                amount: '\$45.00',
+                                status: loc.get('awaiting'),
+                                customerName: 'Green Energy ITD',
+                                location: 'Warszawa',
+                              ),
+                              _buildTransactionCard(
+                                context,
+                                date: loc.get('today'),
+                                time: '13:15',
+                                taskId: '#HFF7403',
+                                amount: '\$32.50',
+                                status: loc.get('in_way'),
+                                customerName: 'Happy Fresh Inc',
+                                location: 'Central Market',
+                              ),
+                              _buildTransactionCard(
+                                context,
+                                date: loc.get('today'),
+                                time: '11:45',
+                                taskId: '#FF4501',
+                                amount: '\$28.75',
+                                status: loc.get('awaiting'),
+                                customerName: 'Fresh Foods Market',
+                                location: 'Downtown',
+                              ),
+                              _buildTransactionCard(
+                                context,
+                                date: loc.get('today'),
+                                time: '10:30',
+                                taskId: '#TL9012',
+                                amount: '\$35.20',
+                                status: loc.get('in_way'),
+                                customerName: 'Tech Labs',
+                                location: 'Business District',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    // History transactions
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Text(
+                            loc.get('history'),
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.getTextColor(context),
+                            ),
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          child: Column(
+                            children: [
+                              _buildTransactionCard(
+                                context,
+                                date: loc.get('yesterday'),
+                                time: '16:45',
+                                taskId: '#EL8901',
+                                amount: '\$38.75',
+                                status: loc.get('completed'),
+                                customerName: 'Tech Solutions',
+                                location: 'Tech Warehouse',
+                              ),
+                              _buildTransactionCard(
+                                context,
+                                date: loc.get('yesterday'),
+                                time: '14:30',
+                                taskId: '#MK7302',
+                                amount: '\$42.50',
+                                status: loc.get('completed'),
+                                customerName: 'Market King',
+                                location: 'Shopping Center',
+                              ),
+                              _buildTransactionCard(
+                                context,
+                                date: loc.get('yesterday'),
+                                time: '11:15',
+                                taskId: '#FS6104',
+                                amount: '\$31.25',
+                                status: loc.get('completed'),
+                                customerName: 'Food Store',
+                                location: 'City Mall',
+                              ),
+                              _buildTransactionCard(
+                                context,
+                                date: loc.get('yesterday'),
+                                time: '09:00',
+                                taskId: '#EP5203',
+                                amount: '\$45.80',
+                                status: loc.get('completed'),
+                                customerName: 'Express Post',
+                                location: 'Logistics Center',
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ][_tabController.index],
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildInsightCard({
@@ -81,218 +375,6 @@ class _TransactionsPageState extends State<TransactionsPage> with SingleTickerPr
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
-                  borderRadius: const BorderRadius.only(
-                    bottomLeft: Radius.circular(24),
-                    bottomRight: Radius.circular(24),
-                  ),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Text(
-                      'Transactions',
-                      style: TextStyle(
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Total Earnings',
-                                style: TextStyle(
-                                  color: Colors.white.withOpacity(0.8),
-                                  fontSize: 14,
-                                ),
-                              ),
-                              const SizedBox(height: 4),
-                              const Text(
-                                '€1,248.30',
-                                style: TextStyle(
-                                  color: Colors.white,
-                                  fontSize: 24,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.white.withOpacity(0.2),
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.account_balance_wallet_outlined,
-                              color: Colors.white,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Insights',
-                      style: TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.getTextColor(context),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    GridView.count(
-                      shrinkWrap: true,
-                      physics: const NeverScrollableScrollPhysics(),
-                      crossAxisCount: 2,
-                      mainAxisSpacing: 16,
-                      crossAxisSpacing: 16,
-                      childAspectRatio: 1.8,
-                      children: [
-                        _buildInsightCard(
-                          title: 'Today\'s Earnings',
-                          amount: '€116.25',
-                          icon: Icons.today,
-                          color: Colors.blue,
-                        ),
-                        _buildInsightCard(
-                          title: 'Pending Amount',
-                          amount: '€45.00',
-                          icon: Icons.pending,
-                          color: Colors.orange,
-                        ),
-                        _buildInsightCard(
-                          title: 'Last Month',
-                          amount: '€3,542.80',
-                          icon: Icons.calendar_month,
-                          color: Colors.purple,
-                        ),
-                        _buildInsightCard(
-                          title: 'Avg. per Day',
-                          amount: '€118.09',
-                          icon: Icons.analytics,
-                          color: Colors.green,
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-              Column(
-                children: [
-                  TabBar(
-                    controller: _tabController,
-                    labelColor: Theme.of(context).brightness == Brightness.dark 
-                        ? Colors.white 
-                        : Theme.of(context).primaryColor,
-                    unselectedLabelColor: AppColors.getSecondaryTextColor(context),
-                    indicator: BoxDecoration(
-                      border: Border(
-                        bottom: BorderSide(
-                          color: Theme.of(context).brightness == Brightness.dark 
-                              ? Colors.white 
-                              : Theme.of(context).primaryColor,
-                          width: 2,
-                        ),
-                      ),
-                    ),
-                    tabs: const [
-                      Tab(text: 'Active'),
-                      Tab(text: 'History'),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 500,
-                    child: TabBarView(
-                      controller: _tabController,
-                      children: [
-                        ListView(
-                          padding: const EdgeInsets.all(16),
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          children: [
-                            _buildTransactionCard(
-                              context,
-                              date: 'Today',
-                              time: '15:30',
-                              taskId: '#GE73895',
-                              amount: '€45.00',
-                              status: 'Awaiting',
-                              customerName: 'Green Energy ITD',
-                              location: 'Warszawa',
-                            ),
-                            _buildTransactionCard(
-                              context,
-                              date: 'Today',
-                              time: '13:15',
-                              taskId: '#HFF7403',
-                              amount: '€32.50',
-                              status: 'Assigned',
-                              customerName: 'Happy Fresh Inc',
-                              location: 'Central Market',
-                            ),
-                          ],
-                        ),
-                        ListView(
-                          padding: const EdgeInsets.all(16),
-                          physics: const NeverScrollableScrollPhysics(),
-                          shrinkWrap: true,
-                          children: [
-                            _buildTransactionCard(
-                              context,
-                              date: 'Yesterday',
-                              time: '16:45',
-                              taskId: '#EL8901',
-                              amount: '€38.75',
-                              status: 'Finished',
-                              customerName: 'Tech Solutions',
-                              location: 'Tech Warehouse',
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
   Widget _buildTransactionCard(BuildContext context, {
     required String date,
     required String time,
@@ -302,6 +384,8 @@ class _TransactionsPageState extends State<TransactionsPage> with SingleTickerPr
     required String customerName,
     required String location,
   }) {
+    final loc = AppLocalizations.of(context);
+    
     Color getStatusColor() {
       switch (status.toLowerCase()) {
         case 'completed':
@@ -324,7 +408,7 @@ class _TransactionsPageState extends State<TransactionsPage> with SingleTickerPr
                   icon: const Icon(Icons.arrow_back),
                   onPressed: () => Navigator.pop(context),
                 ),
-                title: const Text('Task Details'),
+                title: Text(loc.get('task_details')),
               ),
               body: TasksPage(highlightedTaskId: taskId),
             ),

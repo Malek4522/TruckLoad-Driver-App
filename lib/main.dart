@@ -1,24 +1,32 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
 import 'pages/tasks_page.dart';
 import 'pages/transactions_page.dart';
 import 'pages/profile_page.dart';
 //import 'pages/login_page.dart';
 import 'utils/app_colors.dart';
+import 'utils/app_localizations.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   final prefs = await SharedPreferences.getInstance();
   final isDarkMode = prefs.getBool('isDarkMode') ?? false;
-  runApp(MyApp(initialDarkMode: isDarkMode));
+  final languageCode = prefs.getString('languageCode') ?? 'en';
+  runApp(MyApp(
+    initialDarkMode: isDarkMode,
+    initialLocale: Locale(languageCode),
+  ));
 }
 
 class MyApp extends StatefulWidget {
   final bool initialDarkMode;
+  final Locale initialLocale;
   
   const MyApp({
     super.key,
     required this.initialDarkMode,
+    required this.initialLocale,
   });
 
   @override
@@ -27,11 +35,13 @@ class MyApp extends StatefulWidget {
 
 class _MyAppState extends State<MyApp> {
   late bool isDarkMode;
+  late Locale _locale;
 
   @override
   void initState() {
     super.initState();
     isDarkMode = widget.initialDarkMode;
+    _locale = widget.initialLocale;
   }
 
   void toggleTheme() async {
@@ -42,10 +52,30 @@ class _MyAppState extends State<MyApp> {
     await prefs.setBool('isDarkMode', isDarkMode);
   }
 
+  void setLocale(Locale newLocale) async {
+    setState(() {
+      _locale = newLocale;
+    });
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('languageCode', newLocale.languageCode);
+  }
+
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Delivery Tasks',
+      locale: _locale,
+      supportedLocales: const [
+        Locale('en'),
+        Locale('fr'),
+        Locale('ar'),
+      ],
+      localizationsDelegates: const [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
           seedColor: AppColors.primaryGreen,
@@ -93,6 +123,8 @@ class _MyAppState extends State<MyApp> {
       home: ResponsiveLayout(
         isDarkMode: isDarkMode,
         onThemeToggle: toggleTheme,
+        currentLocale: _locale,
+        onLocaleChange: setLocale,
       ),
     );
   }
@@ -101,11 +133,15 @@ class _MyAppState extends State<MyApp> {
 class ResponsiveLayout extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onThemeToggle;
+  final Locale currentLocale;
+  final Function(Locale) onLocaleChange;
 
   const ResponsiveLayout({
     super.key,
     required this.isDarkMode,
     required this.onThemeToggle,
+    required this.currentLocale,
+    required this.onLocaleChange,
   });
 
   @override
@@ -126,6 +162,8 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
           ProfilePage(
             isDarkMode: widget.isDarkMode,
             onThemeToggle: widget.onThemeToggle,
+            currentLocale: widget.currentLocale,
+            onLocaleChange: widget.onLocaleChange,
           ),
         ],
       ),
@@ -136,18 +174,18 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
             _selectedIndex = index;
           });
         },
-        destinations: const [
+        destinations: [
           NavigationDestination(
-            icon: Icon(Icons.task_alt),
-            label: 'Tasks',
+            icon: const Icon(Icons.task_alt),
+            label: AppLocalizations.of(context).get('tasks'),
           ),
           NavigationDestination(
-            icon: Icon(Icons.account_balance_wallet_outlined),
-            label: 'Transactions',
+            icon: const Icon(Icons.account_balance_wallet_outlined),
+            label: AppLocalizations.of(context).get('transactions'),
           ),
           NavigationDestination(
-            icon: Icon(Icons.person),
-            label: 'Profile',
+            icon: const Icon(Icons.person),
+            label: AppLocalizations.of(context).get('profile'),
           ),
         ],
       ),

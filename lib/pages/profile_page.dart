@@ -1,15 +1,21 @@
 import 'package:flutter/material.dart';
 import '../pages/login_page.dart';
 import '../utils/app_colors.dart';
+import '../utils/app_localizations.dart';
+import '../layouts/responsive_layout.dart';
 
 class ProfilePage extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onThemeToggle;
+  final Locale currentLocale;
+  final Function(Locale) onLocaleChange;
 
   const ProfilePage({
     super.key,
     required this.isDarkMode,
     required this.onThemeToggle,
+    required this.currentLocale,
+    required this.onLocaleChange,
   });
 
   @override
@@ -17,7 +23,18 @@ class ProfilePage extends StatefulWidget {
 }
 
 class _ProfilePageState extends State<ProfilePage> {
-  Widget _buildInfoItem(String label, String value, {IconData? icon}) {
+  late AppLanguage _selectedLanguage;
+
+  @override
+  void initState() {
+    super.initState();
+    _selectedLanguage = AppLanguage.values.firstWhere(
+      (lang) => lang.locale.languageCode == widget.currentLocale.languageCode,
+      orElse: () => AppLanguage.EN,
+    );
+  }
+
+  Widget _buildInfoItem(String label, String value, {IconData? icon, Widget? trailing}) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       child: Row(
@@ -73,12 +90,19 @@ class _ProfilePageState extends State<ProfilePage> {
                     )).toList(),
                   )
                 else
-                  Text(
-                    value,
-                    style: const TextStyle(
-                      fontSize: 15,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          value,
+                          style: const TextStyle(
+                            fontSize: 15,
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      ),
+                      if (trailing != null) trailing,
+                    ],
                   ),
               ],
             ),
@@ -91,6 +115,7 @@ class _ProfilePageState extends State<ProfilePage> {
   @override
   Widget build(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    final loc = AppLocalizations.of(context);
     
     return Scaffold(
       backgroundColor: Theme.of(context).scaffoldBackgroundColor,
@@ -114,9 +139,9 @@ class _ProfilePageState extends State<ProfilePage> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text(
-                          'Profile',
-                          style: TextStyle(
+                        Text(
+                          loc.get('profile'),
+                          style: const TextStyle(
                             fontSize: 28,
                             fontWeight: FontWeight.bold,
                             color: Colors.white,
@@ -139,16 +164,26 @@ class _ProfilePageState extends State<ProfilePage> {
                             IconButton(
                               icon: const Icon(Icons.logout, color: Colors.white),
                               onPressed: () {
-                                Navigator.pushReplacement(
-                                  context,
+                                Navigator.of(context).pushAndRemoveUntil(
                                   MaterialPageRoute(
                                     builder: (context) => LoginPage(
                                       onLoginSuccess: () {
-                                        // This won't be called as we're logging out
+                                        Navigator.of(context).pushReplacement(
+                                          MaterialPageRoute(
+                                            builder: (context) => ResponsiveLayout(
+                                              isDarkMode: widget.isDarkMode,
+                                              onThemeToggle: widget.onThemeToggle,
+                                              currentLocale: widget.currentLocale,
+                                              onLocaleChange: widget.onLocaleChange,
+                                            ),
+                                          ),
+                                        );
                                       },
                                     ),
                                   ),
+                                  (route) => false,
                                 );
+                                
                               },
                               style: IconButton.styleFrom(
                                 backgroundColor: Colors.red.withOpacity(0.8),
@@ -188,18 +223,18 @@ class _ProfilePageState extends State<ProfilePage> {
                                   color: Colors.green.withOpacity(0.2),
                                   borderRadius: BorderRadius.circular(20),
                                 ),
-                                child: const Row(
+                                child: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
-                                    Icon(
+                                    const Icon(
                                       Icons.circle,
                                       size: 8,
                                       color: Colors.green,
                                     ),
-                                    SizedBox(width: 8),
+                                    const SizedBox(width: 8),
                                     Text(
-                                      'ONLINE',
-                                      style: TextStyle(
+                                      loc.get('online'),
+                                      style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 12,
                                         fontWeight: FontWeight.w600,
@@ -261,26 +296,59 @@ class _ProfilePageState extends State<ProfilePage> {
                     Padding(
                       padding: const EdgeInsets.all(16),
                       child: Text(
-                        'Personal Information',
+                        loc.get('personal_info'),
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                       ),
                     ),
                     _buildInfoItem(
-                      'Full Name',
+                      loc.get('full_name'),
                       'David Michael Russel',
                       icon: Icons.person_outline,
                     ),
                     _buildInfoItem(
-                      'Email',
+                      loc.get('email'),
                       'david.russel@example.com',
                       icon: Icons.email_outlined,
                     ),
                     _buildInfoItem(
-                      'Phone',
+                      loc.get('phone'),
                       '+48 123 456 789',
                       icon: Icons.phone_outlined,
+                    ),
+                    const Divider(height: 32, indent: 16, endIndent: 16),
+                    _buildInfoItem(
+                      loc.get('language'),
+                      _selectedLanguage.displayName,
+                      icon: Icons.language_outlined,
+                      trailing: PopupMenuButton<AppLanguage>(
+                        icon: const Icon(
+                          Icons.arrow_drop_down,
+                          color: Color(0xFF1E6B5C),
+                        ),
+                        onSelected: (AppLanguage language) {
+                          setState(() {
+                            _selectedLanguage = language;
+                          });
+                          widget.onLocaleChange(language.locale);
+                        },
+                        itemBuilder: (BuildContext context) {
+                          return AppLanguage.values.map((AppLanguage language) {
+                            return PopupMenuItem<AppLanguage>(
+                              value: language,
+                              child: Text(
+                                language.displayName,
+                                style: TextStyle(
+                                  fontWeight: language == _selectedLanguage 
+                                      ? FontWeight.bold 
+                                      : FontWeight.normal,
+                                ),
+                              ),
+                            );
+                          }).toList();
+                        },
+                      ),
                     ),
                   ],
                 ),
@@ -304,24 +372,24 @@ class _ProfilePageState extends State<ProfilePage> {
                     Padding(
                       padding: const EdgeInsets.all(16),
                       child: Text(
-                        'Vehicle Information',
+                        loc.get('vehicle_info'),
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                       ),
                     ),
                     _buildInfoItem(
-                      'Vehicle Type',
+                      loc.get('vehicle_type'),
                       'Delivery Van',
                       icon: Icons.local_shipping_outlined,
                     ),
                     _buildInfoItem(
-                      'Car Model',
+                      loc.get('car_model'),
                       'Mercedes-Benz Sprinter',
                       icon: Icons.directions_car_outlined,
                     ),
                     _buildInfoItem(
-                      'License Plate',
+                      loc.get('license_plate'),
                       'WA 12345',
                       icon: Icons.badge_outlined,
                     ),
@@ -329,31 +397,26 @@ class _ProfilePageState extends State<ProfilePage> {
                     Padding(
                       padding: const EdgeInsets.all(16),
                       child: Text(
-                        'Delivery Capabilities',
+                        loc.get('delivery_capabilities'),
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                       ),
                     ),
                     _buildInfoItem(
-                      'Maximum Weight',
+                      loc.get('max_weight'),
                       '1,500 lbs',
                       icon: Icons.scale_outlined,
                     ),
                     _buildInfoItem(
-                      'Maximum Volume',
+                      loc.get('max_volume'),
                       '12.7 m³',
                       icon: Icons.view_in_ar_outlined,
                     ),
                     _buildInfoItem(
-                      'Cargo Dimensions',
+                      loc.get('cargo_dimensions'),
                       '170" × 70" × 77"',
                       icon: Icons.straighten_outlined,
-                    ),
-                    _buildInfoItem(
-                      'Temperature Range',
-                      '-4°F to 68°F',
-                      icon: Icons.thermostat_outlined,
                     ),
                     Padding(
                       padding: const EdgeInsets.all(16),
@@ -361,7 +424,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Delivery Types',
+                            loc.get('delivery_types'),
                             style: TextStyle(
                               color: Colors.grey[600],
                               fontSize: 13,

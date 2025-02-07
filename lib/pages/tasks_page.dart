@@ -7,6 +7,7 @@ import 'dart:convert';
 import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 import 'package:intl/intl.dart';
 import '../models/task.dart';
+import '../utils/app_localizations.dart';
 
 class TasksPage extends StatefulWidget {
   final String? highlightedTaskId;
@@ -23,8 +24,8 @@ class TasksPage extends StatefulWidget {
 class _TasksPageState extends State<TasksPage> {
   final ScrollController _scrollController = ScrollController();
   final double taskCardHeight = 200;
-  String _selectedFilter = 'All';
-  final List<String> _filters = ['All', ...TaskStatus.values.map((e) => e.displayName)];
+  String _selectedFilter = 'all';
+  final List<String> _filters = ['all', ...TaskStatus.values.map((e) => e.displayName)];
   List<LatLng> routePoints = [];
   final PolylinePoints polylinePoints = PolylinePoints();
   late List<Task> _tasks;
@@ -110,6 +111,7 @@ class _TasksPageState extends State<TasksPage> {
 
   @override
   Widget build(BuildContext context) {
+    final loc = AppLocalizations.of(context);
     final isDark = Theme.of(context).brightness == Brightness.dark;
     
     return Scaffold(
@@ -118,11 +120,11 @@ class _TasksPageState extends State<TasksPage> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            _buildHeader(),
+            _buildHeader(loc),
             _buildUserCard(),
-            _buildTaskFilters(),
+            _buildTaskFilters(loc),
             Expanded(
-              child: _buildTasksList(),
+              child: _buildTasksList(loc),
             ),
           ],
         ),
@@ -130,7 +132,7 @@ class _TasksPageState extends State<TasksPage> {
     );
   }
 
-  Widget _buildHeader() {
+  Widget _buildHeader(AppLocalizations loc) {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Row(
@@ -139,9 +141,9 @@ class _TasksPageState extends State<TasksPage> {
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
-                'Monday',
-                style: TextStyle(
+              Text(
+                loc.get('tasks'),
+                style: const TextStyle(
                   fontSize: 24,
                   fontWeight: FontWeight.bold,
                 ),
@@ -220,14 +222,14 @@ class _TasksPageState extends State<TasksPage> {
     );
   }
 
-  Widget _buildTaskFilters() {
+  Widget _buildTaskFilters(AppLocalizations loc) {
     return Container(
       padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'My Tasks',
+            loc.get('my_tasks'),
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
@@ -243,7 +245,7 @@ class _TasksPageState extends State<TasksPage> {
               itemBuilder: (context, index) {
                 final filter = _filters[index];
                 final isSelected = _selectedFilter == filter;
-                final taskStatus = filter == 'All' 
+                final taskStatus = filter == 'all' 
                     ? null 
                     : TaskStatus.values.firstWhere(
                         (status) => status.displayName == filter
@@ -253,7 +255,7 @@ class _TasksPageState extends State<TasksPage> {
                   padding: const EdgeInsets.only(right: 8),
                   child: FilterChip(
                     label: Text(
-                      filter,
+                      filter == 'all' ? loc.get('all_tasks') : filter,
                       style: TextStyle(
                         color: isSelected 
                             ? Colors.white 
@@ -284,9 +286,9 @@ class _TasksPageState extends State<TasksPage> {
     );
   }
 
-  Widget _buildTasksList() {
+  Widget _buildTasksList(AppLocalizations loc) {
     final filteredTasks = _tasks.where((task) {
-      if (_selectedFilter == 'All') return true;
+      if (_selectedFilter == 'all') return true;
       return task.status.displayName == _selectedFilter;
     }).toList();
 
@@ -302,7 +304,7 @@ class _TasksPageState extends State<TasksPage> {
             ),
             const SizedBox(height: 16),
             Text(
-              'No ${_selectedFilter.toLowerCase()} tasks found',
+              loc.get('no_tasks'),
               style: TextStyle(
                 color: AppColors.getSecondaryTextColor(context),
                 fontSize: 16,
@@ -317,11 +319,12 @@ class _TasksPageState extends State<TasksPage> {
       controller: _scrollController,
       padding: const EdgeInsets.all(16),
       itemCount: filteredTasks.length,
-      itemBuilder: (context, index) => _buildTaskCard(filteredTasks[index]),
+      itemBuilder: (context, index) => _buildTaskCard(context, filteredTasks[index]),
     );
   }
 
-  Widget _buildTaskCard(Task task) {
+  Widget _buildTaskCard(BuildContext context, Task task) {
+    final loc = AppLocalizations.of(context);
     final bool isHighlighted = widget.highlightedTaskId == task.id;
     final bool isExpanded = _expandedTaskId == task.id;
     final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -480,6 +483,39 @@ class _TasksPageState extends State<TasksPage> {
                                         color: Theme.of(context).textTheme.bodyMedium?.color,
                                         fontSize: 16,
                                       ),
+                                    ),
+                                    const SizedBox(height: 4),
+                                    Row(
+                                      children: [
+                                        Icon(
+                                          Icons.phone_outlined,
+                                          color: AppColors.getSecondaryTextColor(context),
+                                          size: 16,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          '+48 123 456 789',
+                                          style: const TextStyle(
+                                            fontSize: 14,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                        const SizedBox(width: 4),
+                                        IconButton(
+                                          icon: const Icon(Icons.content_copy, size: 14),
+                                          onPressed: () {
+                                            ScaffoldMessenger.of(context).showSnackBar(
+                                              const SnackBar(
+                                                content: Text('Phone number copied to clipboard'),
+                                                duration: Duration(seconds: 2),
+                                              ),
+                                            );
+                                          },
+                                          color: Theme.of(context).primaryColor,
+                                          padding: EdgeInsets.zero,
+                                          constraints: const BoxConstraints(),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
@@ -672,6 +708,41 @@ class _TasksPageState extends State<TasksPage> {
                             )).toList(),
                           ),
                           const SizedBox(height: 24),
+                          Row(
+                            children: [
+                              Icon(
+                                Icons.phone_outlined,
+                                color: AppColors.getSecondaryTextColor(context),
+                                size: 20,
+                              ),
+                              const SizedBox(width: 8),
+                              Text(
+                                '+48 123 456 789',
+                                style: TextStyle(
+                                  color: AppColors.getTextColor(context),
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                icon: const Icon(Icons.content_copy, size: 16),
+                                onPressed: () {
+                                  // Copy to clipboard functionality can be added here
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Phone number copied to clipboard'),
+                                      duration: Duration(seconds: 2),
+                                    ),
+                                  );
+                                },
+                                color: Theme.of(context).primaryColor,
+                                padding: EdgeInsets.zero,
+                                constraints: const BoxConstraints(),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 16),
                           if (task.status == TaskStatus.AWAITING)
                             Row(
                               children: [

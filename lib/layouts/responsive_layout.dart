@@ -6,11 +6,15 @@ import '../pages/profile_page.dart';
 class ResponsiveLayout extends StatefulWidget {
   final bool isDarkMode;
   final VoidCallback onThemeToggle;
+  final Locale currentLocale;
+  final Function(Locale) onLocaleChange;
 
   const ResponsiveLayout({
     super.key,
     required this.isDarkMode,
     required this.onThemeToggle,
+    required this.currentLocale,
+    required this.onLocaleChange,
   });
 
   @override
@@ -31,6 +35,8 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
           ProfilePage(
             isDarkMode: widget.isDarkMode,
             onThemeToggle: widget.onThemeToggle,
+            currentLocale: widget.currentLocale,
+            onLocaleChange: widget.onLocaleChange,
           ),
         ],
       ),
