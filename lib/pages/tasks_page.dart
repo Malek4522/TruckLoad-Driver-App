@@ -1,13 +1,22 @@
 import 'package:flutter/material.dart';
+import 'transactions_page.dart';
+import '../utils/app_colors.dart';
 
 class TasksPage extends StatefulWidget {
-  const TasksPage({super.key});
+  final String? highlightedTaskId;
+  
+  const TasksPage({
+    super.key,
+    this.highlightedTaskId,
+  });
 
   @override
   State<TasksPage> createState() => _TasksPageState();
 }
 
 class _TasksPageState extends State<TasksPage> {
+  final ScrollController _scrollController = ScrollController();
+  final double taskCardHeight = 200; // Approximate height of each task card
   String _selectedFilter = 'All';
   final List<String> _filters = ['All', 'Finished', 'Awaiting', 'Assigned'];
 
@@ -98,9 +107,37 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   @override
+  void initState() {
+    super.initState();
+    if (widget.highlightedTaskId != null) {
+      // Scroll to highlighted task
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        // Find the task index and scroll to it
+        final taskIndex = _tasks.indexWhere(
+          (task) => task['id'] == widget.highlightedTaskId
+        );
+        if (taskIndex != -1) {
+          // You'll need to add a ScrollController to your ListView
+          _scrollController.animateTo(
+            taskIndex * (taskCardHeight + 16), // Approximate position
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+          );
+        }
+      });
+    }
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       body: SafeArea(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -136,7 +173,7 @@ class _TasksPageState extends State<TasksPage> {
               Text(
                 'Dec 30, 2022',
                 style: TextStyle(
-                  color: Colors.grey[600],
+                  color: AppColors.getSecondaryTextColor(context),
                 ),
               ),
             ],
@@ -151,18 +188,22 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   Widget _buildUserCard() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       margin: const EdgeInsets.all(16),
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppColors.getCardColor(context),
         borderRadius: BorderRadius.circular(12),
       ),
       child: Row(
         children: [
           CircleAvatar(
-            backgroundColor: Colors.grey[200],
-            child: const Icon(Icons.person),
+            backgroundColor: isDark ? Colors.grey[800] : Colors.grey[200],
+            child: Icon(
+              Icons.person,
+              color: isDark ? Colors.grey[300] : Colors.grey[600],
+            ),
           ),
           const SizedBox(width: 12),
           Column(
@@ -177,7 +218,7 @@ class _TasksPageState extends State<TasksPage> {
               Text(
                 'PO 12345',
                 style: TextStyle(
-                  color: Colors.grey[600],
+                  color: AppColors.getSecondaryTextColor(context),
                   fontSize: 12,
                 ),
               ),
@@ -187,13 +228,13 @@ class _TasksPageState extends State<TasksPage> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.green[50],
+              color: isDark ? Colors.green[900] : Colors.green[50],
               borderRadius: BorderRadius.circular(12),
             ),
-            child: const Text(
+            child: Text(
               'ONLINE',
               style: TextStyle(
-                color: Colors.green,
+                color: isDark ? Colors.green[300] : Colors.green,
                 fontSize: 12,
               ),
             ),
@@ -204,16 +245,18 @@ class _TasksPageState extends State<TasksPage> {
   }
 
   Widget _buildTaskFilters() {
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'My Task',
             style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.w600,
+              color: AppColors.getTextColor(context),
             ),
           ),
           const SizedBox(height: 12),
@@ -227,10 +270,12 @@ class _TasksPageState extends State<TasksPage> {
                   child: ChoiceChip(
                     label: Text(filter),
                     selected: isSelected,
-                    backgroundColor: Colors.white,
-                    selectedColor: Colors.white,
+                    backgroundColor: isDark ? Colors.grey[800] : Colors.white,
+                    selectedColor: isDark ? Colors.grey[700] : Colors.white,
                     labelStyle: TextStyle(
-                      color: isSelected ? Colors.black : Colors.grey,
+                      color: isSelected 
+                          ? (isDark ? Colors.white : Colors.black)
+                          : AppColors.getSecondaryTextColor(context),
                       fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                     ),
                     padding: const EdgeInsets.symmetric(horizontal: 8),
@@ -238,7 +283,9 @@ class _TasksPageState extends State<TasksPage> {
                       borderRadius: BorderRadius.circular(20),
                     ),
                     side: BorderSide(
-                      color: isSelected ? Colors.black : Colors.grey.shade300,
+                      color: isSelected 
+                          ? (isDark ? Colors.white : Colors.black)
+                          : (isDark ? Colors.grey[600]! : Colors.grey[300]!),
                       width: 1,
                     ),
                     onSelected: (bool selected) {
@@ -262,12 +309,13 @@ class _TasksPageState extends State<TasksPage> {
       return Center(
         child: Text(
           'No ${_selectedFilter.toLowerCase()} tasks found',
-          style: TextStyle(color: Colors.grey[600]),
+          style: TextStyle(color: AppColors.getSecondaryTextColor(context)),
         ),
       );
     }
     
     return ListView.separated(
+      controller: _scrollController,
       padding: const EdgeInsets.all(16),
       itemCount: tasks.length,
       separatorBuilder: (context, index) => const SizedBox(height: 16),
@@ -305,24 +353,40 @@ class _TasksPageState extends State<TasksPage> {
     required String destinationAddress,
     required String status,
   }) {
+    final bool isHighlighted = widget.highlightedTaskId == id;
+    
     Color getTypeColor(String taskType) {
+      final isDark = Theme.of(context).brightness == Brightness.dark;
       switch (taskType) {
         case 'AWAITING':
-          return const Color(0xFF1E6B5C);
+          return isDark ? Colors.teal : const Color(0xFF1E6B5C);
         case 'ASSIGNED':
-          return const Color(0xFFFFB74D);
+          return isDark ? Colors.amber : const Color(0xFFFFB74D);
         case 'FINISHED':
-          return Colors.grey;
+          return isDark ? Colors.grey[400]! : Colors.grey;
         default:
-          return Colors.grey;
+          return isDark ? Colors.grey[400]! : Colors.grey;
       }
     }
 
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(12),
+        color: AppColors.getCardColor(context),
+        borderRadius: BorderRadius.circular(16),
+        border: isHighlighted 
+          ? Border.all(
+              color: Theme.of(context).primaryColor,
+              width: 2,
+            )
+          : null,
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.05),
+            blurRadius: 10,
+            offset: const Offset(0, 5),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -371,7 +435,7 @@ class _TasksPageState extends State<TasksPage> {
                         Text(
                           company,
                           style: TextStyle(
-                            color: Colors.grey[600],
+                            color: AppColors.getSecondaryTextColor(context),
                             fontSize: 13,
                           ),
                         ),
@@ -388,10 +452,10 @@ class _TasksPageState extends State<TasksPage> {
                     ),
                     Text(
                       price,
-                      style: TextStyle(
-                        color: Theme.of(context).primaryColor,
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
+                      style: const TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Color(0xFF1E6B5C),
                       ),
                     ),
                   ],
@@ -401,7 +465,7 @@ class _TasksPageState extends State<TasksPage> {
                   Text(
                     'Contains: $weight',
                     style: TextStyle(
-                      color: Colors.grey[600],
+                      color: AppColors.getSecondaryTextColor(context),
                       fontSize: 13,
                     ),
                   ),
@@ -427,7 +491,7 @@ class _TasksPageState extends State<TasksPage> {
                       child: Text(
                         distance,
                         style: TextStyle(
-                          color: Colors.grey[600],
+                          color: AppColors.getSecondaryTextColor(context),
                           fontSize: 13,
                         ),
                       ),
@@ -492,7 +556,13 @@ class _TasksPageState extends State<TasksPage> {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, color: iconColor, size: 24),
+        Icon(
+          icon,
+          color: Theme.of(context).brightness == Brightness.dark
+              ? Colors.teal // or any other color that fits your dark theme
+              : iconColor,
+          size: 24
+        ),
         const SizedBox(width: 8),
         Expanded(
           child: Column(
@@ -500,16 +570,17 @@ class _TasksPageState extends State<TasksPage> {
             children: [
               Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontWeight: FontWeight.w600,
                   fontSize: 14,
+                  color: AppColors.getTextColor(context),
                 ),
               ),
               const SizedBox(height: 2),
               Text(
                 subtitle,
                 style: TextStyle(
-                  color: Colors.grey[600],
+                  color: AppColors.getSecondaryTextColor(context),
                   fontSize: 13,
                 ),
               ),

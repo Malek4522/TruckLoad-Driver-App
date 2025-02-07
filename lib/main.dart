@@ -1,15 +1,28 @@
 import 'package:flutter/material.dart';
-import 'pages/home_page.dart';
 import 'pages/tasks_page.dart';
 import 'pages/transactions_page.dart';
 import 'pages/profile_page.dart';
+import 'utils/app_colors.dart';
 
 void main() {
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  bool isDarkMode = false;
+
+  void toggleTheme() {
+    setState(() {
+      isDarkMode = !isDarkMode;
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -17,18 +30,47 @@ class MyApp extends StatelessWidget {
       title: 'Delivery Tasks',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1E6B5C),
-          primary: const Color(0xFF1E6B5C),
+          seedColor: AppColors.primaryGreen,
+          primary: AppColors.primaryGreen,
+          brightness: isDarkMode ? Brightness.dark : Brightness.light,
+        ),
+        scaffoldBackgroundColor: isDarkMode 
+            ? AppColors.darkBackground 
+            : AppColors.lightBackground,
+        cardColor: isDarkMode 
+            ? AppColors.darkCard 
+            : AppColors.lightCard,
+        textTheme: TextTheme(
+          bodyLarge: TextStyle(
+            color: isDarkMode 
+                ? AppColors.darkText 
+                : AppColors.lightText,
+          ),
+          bodyMedium: TextStyle(
+            color: isDarkMode 
+                ? AppColors.darkTextSecondary 
+                : AppColors.lightTextSecondary,
+          ),
         ),
         useMaterial3: true,
       ),
-      home: const ResponsiveLayout(),
+      home: ResponsiveLayout(
+        isDarkMode: isDarkMode,
+        onThemeToggle: toggleTheme,
+      ),
     );
   }
 }
 
 class ResponsiveLayout extends StatefulWidget {
-  const ResponsiveLayout({super.key});
+  final bool isDarkMode;
+  final VoidCallback onThemeToggle;
+
+  const ResponsiveLayout({
+    super.key,
+    required this.isDarkMode,
+    required this.onThemeToggle,
+  });
 
   @override
   State<ResponsiveLayout> createState() => _ResponsiveLayoutState();
@@ -37,16 +79,20 @@ class ResponsiveLayout extends StatefulWidget {
 class _ResponsiveLayoutState extends State<ResponsiveLayout> {
   int _selectedIndex = 0;
   
-  final List<Widget> _pages = [
-    const TasksPage(),
-    const TransactionsPage(),
-    const ProfilePage(),
-  ];
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _pages[_selectedIndex],
+      body: IndexedStack(
+        index: _selectedIndex,
+        children: [
+          const TasksPage(),
+          const TransactionsPage(),
+          ProfilePage(
+            isDarkMode: widget.isDarkMode,
+            onThemeToggle: widget.onThemeToggle,
+          ),
+        ],
+      ),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (int index) {
