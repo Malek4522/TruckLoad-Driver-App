@@ -1,6 +1,9 @@
 import 'package:flutter/material.dart';
 import 'transactions_page.dart';
 import '../utils/app_colors.dart';
+import 'task_detail_page.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
 
 class TasksPage extends StatefulWidget {
   final String? highlightedTaskId;
@@ -345,6 +348,9 @@ class _TasksPageState extends State<TasksPage> {
     );
   }
 
+  // Add this property to track expanded task
+  String? _expandedTaskId;
+
   Widget _buildTaskCard({
     required String title,
     required String id,
@@ -360,6 +366,7 @@ class _TasksPageState extends State<TasksPage> {
     required String status,
   }) {
     final bool isHighlighted = widget.highlightedTaskId == id;
+    final bool isExpanded = _expandedTaskId == id;
     
     Color getTypeColor(String taskType) {
       final isDark = Theme.of(context).brightness == Brightness.dark;
@@ -375,182 +382,398 @@ class _TasksPageState extends State<TasksPage> {
       }
     }
 
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 8),
-      decoration: BoxDecoration(
-        color: AppColors.getCardColor(context),
-        borderRadius: BorderRadius.circular(16),
-        border: isHighlighted 
-          ? Border.all(
-              color: Theme.of(context).brightness == Brightness.dark 
-                  ? Colors.tealAccent  // More visible in dark mode
-                  : Theme.of(context).primaryColor,
-              width: 2,
-            )
-          : null,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.05),
-            blurRadius: 10,
-            offset: const Offset(0, 5),
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+    return GestureDetector(
+      onTap: () {
+        showModalBottomSheet(
+          context: context,
+          isScrollControlled: true,
+          backgroundColor: Colors.transparent,
+          builder: (context) => DraggableScrollableSheet(
+            initialChildSize: 0.8,
+            minChildSize: 0.5,
+            maxChildSize: 0.95,
+            builder: (context, scrollController) => Container(
+              decoration: BoxDecoration(
+                color: AppColors.getCardColor(context),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
+              ),
+              child: SingleChildScrollView(
+                controller: scrollController,
+                child: Column(
                   children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w600,
-                        fontSize: 16,
-                      ),
-                    ),
                     Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
-                      ),
+                      margin: const EdgeInsets.symmetric(vertical: 12),
+                      height: 4,
+                      width: 40,
                       decoration: BoxDecoration(
-                        color: getTypeColor(type).withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Text(
-                        type,
-                        style: TextStyle(
-                          color: getTypeColor(type),
-                          fontSize: 12,
-                          fontWeight: FontWeight.w600,
-                        ),
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
                       ),
                     ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Text(
-                          company,
-                          style: TextStyle(
-                            color: AppColors.getSecondaryTextColor(context),
-                            fontSize: 13,
+                    SizedBox(
+                      height: 300,
+                      child: FlutterMap(
+                        options: MapOptions(
+                          initialCenter: const LatLng(52.2297, 21.0122),
+                          initialZoom: 12,
+                          interactionOptions: const InteractionOptions(
+                            flags: InteractiveFlag.none,
                           ),
                         ),
-                        const SizedBox(width: 8),
-                        Text(
-                          id,
-                          style: const TextStyle(
-                            color: Colors.orange,
-                            fontWeight: FontWeight.w600,
-                            fontSize: 13,
+                        children: [
+                          TileLayer(
+                            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                            userAgentPackageName: 'com.example.app',
                           ),
-                        ),
-                      ],
-                    ),
-                    Text(
-                      price,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        color: Color(0xFF1E6B5C),
+                          MarkerLayer(
+                            markers: [
+                              Marker(
+                                point: const LatLng(52.2297, 21.0122),
+                                width: 80,
+                                height: 80,
+                                child: Icon(
+                                  Icons.location_on,
+                                  color: Theme.of(context).primaryColor,
+                                  size: 40,
+                                ),
+                              ),
+                              Marker(
+                                point: const LatLng(52.2297, 20.7810),
+                                width: 80,
+                                height: 80,
+                                child: const Icon(
+                                  Icons.location_on,
+                                  color: Colors.orange,
+                                  size: 40,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
                       ),
                     ),
+                    Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            title,
+                            style: const TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            company,
+                            style: TextStyle(
+                              color: AppColors.getSecondaryTextColor(context),
+                              fontSize: 16,
+                            ),
+                          ),
+                          const SizedBox(height: 16),
+                          _buildLocationRow(
+                            icon: Icons.location_on,
+                            iconColor: const Color(0xFF1E6B5C),
+                            title: location,
+                            subtitle: address,
+                            taskId: id,
+                          ),
+                          if (distance.isNotEmpty)
+                            Padding(
+                              padding: const EdgeInsets.only(left: 32),
+                              child: Text(
+                                distance,
+                                style: const TextStyle(
+                                  color: Color(0xFF1E6B5C),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                          const SizedBox(height: 16),
+                          _buildLocationRow(
+                            icon: Icons.location_on_outlined,
+                            iconColor: Colors.orange,
+                            title: destination,
+                            subtitle: destinationAddress,
+                            taskId: id,
+                          ),
+                          const SizedBox(height: 24),
+                          if (type == 'AWAITING')
+                            Row(
+                              children: [
+                                Expanded(
+                                  child: OutlinedButton(
+                                    onPressed: () {
+                                      _handleDeclineTask(id);
+                                      Navigator.pop(context);
+                                    },
+                                    style: OutlinedButton.styleFrom(
+                                      foregroundColor: Colors.red,
+                                      side: const BorderSide(color: Colors.red),
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                    ),
+                                    child: const Text('Reject'),
+                                  ),
+                                ),
+                                const SizedBox(width: 16),
+                                Expanded(
+                                  child: ElevatedButton(
+                                    onPressed: () {
+                                      _handleAcceptTask(id);
+                                      Navigator.pop(context);
+                                    },
+                                    style: ElevatedButton.styleFrom(
+                                      backgroundColor: Theme.of(context).primaryColor,
+                                      foregroundColor: Colors.white,
+                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                    ),
+                                    child: const Text('Pickup Load'),
+                                  ),
+                                ),
+                              ],
+                            ),
+                        ],
+                      ),
+                    ),
+                    SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
                   ],
                 ),
-                if (weight.isNotEmpty) ...[
-                  const SizedBox(height: 4),
-                  Text(
-                    'Contains: $weight',
-                    style: TextStyle(
-                      color: AppColors.getSecondaryTextColor(context),
-                      fontSize: 13,
-                    ),
-                  ),
-                ],
-              ],
+              ),
             ),
           ),
-          if (address.isNotEmpty) ...[
-            const Divider(height: 1),
+        );
+      },
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 8),
+        decoration: BoxDecoration(
+          color: AppColors.getCardColor(context),
+          borderRadius: BorderRadius.circular(16),
+          border: isHighlighted ? Border.all(
+            color: Theme.of(context).brightness == Brightness.dark 
+                ? Colors.tealAccent
+                : Theme.of(context).primaryColor,
+            width: 2,
+          ) : null,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
             Padding(
               padding: const EdgeInsets.all(16),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildLocationRow(
-                    icon: Icons.location_on,
-                    iconColor: const Color(0xFF1E6B5C),
-                    title: location,
-                    subtitle: address,
-                  ),
-                  if (distance.isNotEmpty)
-                    Padding(
-                      padding: const EdgeInsets.only(left: 32),
-                      child: Text(
-                        distance,
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        title,
                         style: TextStyle(
-                          color: AppColors.getSecondaryTextColor(context),
-                          fontSize: 13,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.getTextColor(context),
                         ),
                       ),
-                    ),
-                  if (destination.isNotEmpty && destinationAddress.isNotEmpty) ...[
-                    const SizedBox(height: 16),
-                    _buildLocationRow(
-                      icon: Icons.location_on_outlined,
-                      iconColor: Colors.orange,
-                      title: destination,
-                      subtitle: destinationAddress,
-                    ),
-                  ],
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFE8F5F3),
+                          borderRadius: BorderRadius.circular(8),
+                        ),
+                        child: Text(
+                          type == 'AWAITING' ? 'PICKUP' : type,
+                          style: const TextStyle(
+                            color: Color(0xFF1E6B5C),
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Text(
+                            company,
+                            style: TextStyle(
+                              color: AppColors.getSecondaryTextColor(context),
+                              fontSize: 14,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            id,
+                            style: const TextStyle(
+                              color: Colors.orange,
+                              fontSize: 14,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        price,
+                        style: const TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Color(0xFF1E6B5C),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Text(
+                        'Today',
+                        style: const TextStyle(
+                          color: Color(0xFF1E6B5C),
+                          fontSize: 14,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        '•',
+                        style: TextStyle(
+                          color: AppColors.getSecondaryTextColor(context),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Container, $weight',
+                        style: TextStyle(
+                          color: AppColors.getSecondaryTextColor(context),
+                          fontSize: 14,
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Column(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: const Color(0xFF1E6B5C),
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.warehouse_outlined,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                          Container(
+                            width: 2,
+                            height: 30,
+                            color: Colors.grey[300],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.all(8),
+                            decoration: BoxDecoration(
+                              color: Colors.orange,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: const Icon(
+                              Icons.warehouse_outlined,
+                              color: Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  location,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  address,
+                                  style: TextStyle(
+                                    color: AppColors.getSecondaryTextColor(context),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              margin: const EdgeInsets.symmetric(vertical: 8),
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color: const Color(0xFFE8F5F3),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                distance,
+                                style: const TextStyle(
+                                  color: Color(0xFF1E6B5C),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                ),
+                              ),
+                            ),
+                            Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  destination,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                Text(
+                                  destinationAddress,
+                                  style: TextStyle(
+                                    color: AppColors.getSecondaryTextColor(context),
+                                    fontSize: 13,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ],
               ),
             ),
           ],
-          if (type == 'AWAITING') ...[
-            const Divider(height: 1),
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: OutlinedButton(
-                      onPressed: () => _handleDeclineTask(id),
-                      style: OutlinedButton.styleFrom(
-                        foregroundColor: Colors.red,
-                        side: const BorderSide(color: Colors.red),
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text('Decline'),
-                    ),
-                  ),
-                  const SizedBox(width: 16),
-                  Expanded(
-                    child: ElevatedButton(
-                      onPressed: () => _handleAcceptTask(id),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Theme.of(context).primaryColor,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                      child: const Text('Accept'),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ],
+        ),
       ),
     );
   }
@@ -560,6 +783,7 @@ class _TasksPageState extends State<TasksPage> {
     required Color iconColor,
     required String title,
     required String subtitle,
+    required String taskId,
   }) {
     return Row(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -567,7 +791,7 @@ class _TasksPageState extends State<TasksPage> {
         Icon(
           icon,
           color: Theme.of(context).brightness == Brightness.dark
-              ? Colors.teal // or any other color that fits your dark theme
+              ? Colors.teal
               : iconColor,
           size: 24
         ),
