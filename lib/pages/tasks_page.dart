@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
-import 'transactions_page.dart';
 import '../utils/app_colors.dart';
-import 'task_detail_page.dart';
 import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
+import 'package:flutter_polyline_points/flutter_polyline_points.dart';
 
 class TasksPage extends StatefulWidget {
   final String? highlightedTaskId;
@@ -22,6 +23,8 @@ class _TasksPageState extends State<TasksPage> {
   final double taskCardHeight = 200; // Approximate height of each task card
   String _selectedFilter = 'All';
   final List<String> _filters = ['All', 'Finished', 'Awaiting', 'Assigned'];
+  List<LatLng> routePoints = [];
+  final PolylinePoints polylinePoints = PolylinePoints();
 
   final List<Map<String, dynamic>> _tasks = [
     {
@@ -33,9 +36,11 @@ class _TasksPageState extends State<TasksPage> {
       'company': 'Green Energy ITD',
       'location': 'Warszawa',
       'address': 'Warehouse Pickup - Okopowa 17/2, 01-042 Warszawa',
+      'pickupCoords': const LatLng(55.2297, 23.0122),
       'distance': '55.9 km • 1 hour 1 min EST',
       'destination': 'Sochaczew',
       'destinationAddress': 'Warszawska 82, 96-515 Sochaczew',
+      'destinationCoords': const LatLng(52.2297, 20.7810),
       'status': 'awaiting',
       'date': 'Today',
       'time': '15:30',
@@ -49,9 +54,11 @@ class _TasksPageState extends State<TasksPage> {
       'company': 'Happy Fresh Inc',
       'location': 'Central Market',
       'address': 'Market Square 123, 00-001 Warszawa',
+      'pickupCoords': const LatLng(52.2369, 21.0127),
       'distance': '42.3 km • 45 min EST',
       'destination': 'Fresh Foods Store',
       'destinationAddress': 'Grocery Street 45, 01-234 Praga',
+      'destinationCoords': const LatLng(52.2550, 21.0394),
       'status': 'assigned',
       'date': 'Today',
       'time': '13:15',
@@ -65,9 +72,11 @@ class _TasksPageState extends State<TasksPage> {
       'company': 'Tech Solutions',
       'location': 'Tech Warehouse',
       'address': 'Industrial Park 78, 02-345 Wola',
+      'pickupCoords': const LatLng(52.2320, 20.9532),
       'distance': '38.7 km • 52 min EST',
       'destination': 'Electronics Store',
       'destinationAddress': 'Digital Avenue 90, 03-456 Mokotów',
+      'destinationCoords': const LatLng(52.1907, 21.0244),
       'status': 'finished',
       'date': 'Yesterday',
       'time': '16:45',
@@ -339,9 +348,11 @@ class _TasksPageState extends State<TasksPage> {
           location: task['location'],
           company: task['company'],
           address: task['address'],
+          pickupCoords: task['pickupCoords'],
           distance: task['distance'],
           destination: task['destination'],
           destinationAddress: task['destinationAddress'],
+          destinationCoords: task['destinationCoords'],
           status: task['status'],
         );
       },
@@ -360,9 +371,11 @@ class _TasksPageState extends State<TasksPage> {
     required String location,
     required String company,
     required String address,
+    required LatLng pickupCoords,
     required String distance,
     required String destination,
     required String destinationAddress,
+    required LatLng destinationCoords,
     required String status,
   }) {
     final bool isHighlighted = widget.highlightedTaskId == id;
@@ -399,150 +412,206 @@ class _TasksPageState extends State<TasksPage> {
                   top: Radius.circular(24),
                 ),
               ),
-              child: SingleChildScrollView(
-                controller: scrollController,
-                child: Column(
-                  children: [
-                    Container(
-                      margin: const EdgeInsets.symmetric(vertical: 12),
-                      height: 4,
-                      width: 40,
-                      decoration: BoxDecoration(
-                        color: Colors.grey[300],
-                        borderRadius: BorderRadius.circular(2),
-                      ),
+              child: Column(
+                children: [
+                  Container(
+                    margin: const EdgeInsets.symmetric(vertical: 8),
+                    height: 4,
+                    width: 40,
+                    decoration: BoxDecoration(
+                      color: Colors.grey[300],
+                      borderRadius: BorderRadius.circular(2),
                     ),
-                    SizedBox(
-                      height: 300,
-                      child: FlutterMap(
-                        options: MapOptions(
-                          initialCenter: const LatLng(52.2297, 21.0122),
-                          initialZoom: 12,
-                          interactionOptions: const InteractionOptions(
-                            flags: InteractiveFlag.none,
-                          ),
-                        ),
-                        children: [
-                          TileLayer(
-                            urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            userAgentPackageName: 'com.example.app',
-                          ),
-                          MarkerLayer(
-                            markers: [
-                              Marker(
-                                point: const LatLng(52.2297, 21.0122),
-                                width: 80,
-                                height: 80,
-                                child: Icon(
-                                  Icons.location_on,
-                                  color: Theme.of(context).primaryColor,
-                                  size: 40,
-                                ),
-                              ),
-                              Marker(
-                                point: const LatLng(52.2297, 20.7810),
-                                width: 80,
-                                height: 80,
-                                child: const Icon(
-                                  Icons.location_on,
-                                  color: Colors.orange,
-                                  size: 40,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                    Padding(
-                      padding: const EdgeInsets.all(16),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            title,
-                            style: const TextStyle(
-                              fontSize: 20,
-                              fontWeight: FontWeight.bold,
+                  ),
+                  SizedBox(
+                    height: 300,
+                    child: FutureBuilder<List<LatLng>>(
+                      future: getRoutePoints(pickupCoords, destinationCoords),
+                      builder: (context, snapshot) {
+                        if (snapshot.hasData) {
+                          routePoints = snapshot.data!;
+                        }
+                        return FlutterMap(
+                          options: MapOptions(
+                            initialCenter: LatLng(
+                              (pickupCoords.latitude + destinationCoords.latitude) / 2,
+                              (pickupCoords.longitude + destinationCoords.longitude) / 2,
+                            ),
+                            initialZoom: 11,  // Reduced zoom to show more area
+                            bounds: LatLngBounds.fromPoints([
+                              pickupCoords,
+                              destinationCoords,
+                            ]),
+                            boundsOptions: const FitBoundsOptions(
+                              padding: EdgeInsets.all(50),
                             ),
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            company,
-                            style: TextStyle(
-                              color: AppColors.getSecondaryTextColor(context),
-                              fontSize: 16,
+                          children: [
+                            TileLayer(
+                              urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                              userAgentPackageName: 'com.example.app',
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          _buildLocationRow(
-                            icon: Icons.location_on,
-                            iconColor: const Color(0xFF1E6B5C),
-                            title: location,
-                            subtitle: address,
-                            taskId: id,
-                          ),
-                          if (distance.isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.only(left: 32),
-                              child: Text(
-                                distance,
-                                style: const TextStyle(
-                                  color: Color(0xFF1E6B5C),
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w500,
+                            PolylineLayer(
+                              polylines: [
+                                Polyline(
+                                  points: routePoints.isEmpty ? [pickupCoords, destinationCoords] : routePoints,
+                                  color: const Color(0xFF1E6B5C),
+                                  strokeWidth: 4.0,
                                 ),
-                              ),
+                              ],
                             ),
-                          const SizedBox(height: 16),
-                          _buildLocationRow(
-                            icon: Icons.location_on_outlined,
-                            iconColor: Colors.orange,
-                            title: destination,
-                            subtitle: destinationAddress,
-                            taskId: id,
-                          ),
-                          const SizedBox(height: 24),
-                          if (type == 'AWAITING')
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: OutlinedButton(
-                                    onPressed: () {
-                                      _handleDeclineTask(id);
-                                      Navigator.pop(context);
-                                    },
-                                    style: OutlinedButton.styleFrom(
-                                      foregroundColor: Colors.red,
-                                      side: const BorderSide(color: Colors.red),
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
-                                    ),
-                                    child: const Text('Reject'),
+                            MarkerLayer(
+                              markers: [
+                                Marker(
+                                  point: pickupCoords,
+                                  width: 80,
+                                  height: 80,
+                                  child: Icon(
+                                    Icons.warehouse_outlined,
+                                    color: const Color(0xFF1E6B5C),
+                                    size: 40,
                                   ),
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: ElevatedButton(
-                                    onPressed: () {
-                                      _handleAcceptTask(id);
-                                      Navigator.pop(context);
-                                    },
-                                    style: ElevatedButton.styleFrom(
-                                      backgroundColor: Theme.of(context).primaryColor,
-                                      foregroundColor: Colors.white,
-                                      padding: const EdgeInsets.symmetric(vertical: 12),
+                                Marker(
+                                  point: LatLng(
+                                    (pickupCoords.latitude + destinationCoords.latitude) / 2,
+                                    (pickupCoords.longitude + destinationCoords.longitude) / 2 + 0.01,
+                                  ),
+                                  width: 100,
+                                  height: 40,
+                                  alignment: Alignment.bottomCenter,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: const Color(0xFF1E6B5C),
+                                      borderRadius: BorderRadius.circular(12),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.2),
+                                          blurRadius: 4,
+                                          offset: const Offset(0, 2),
+                                        ),
+                                      ],
                                     ),
-                                    child: const Text('Pickup Load'),
+                                    child: Text(
+                                      distance,
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                Marker(
+                                  point: destinationCoords,
+                                  width: 80,
+                                  height: 80,
+                                  child: const Icon(
+                                    Icons.warehouse_outlined,
+                                    color: Colors.orange,
+                                    size: 40,
                                   ),
                                 ),
                               ],
                             ),
-                        ],
+                          ],
+                        );
+                      },
+                    ),
+                  ),
+                  Expanded(
+                    child: SingleChildScrollView(
+                      controller: scrollController,
+                      child: Padding(
+                        padding: const EdgeInsets.all(16),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              title,
+                              style: const TextStyle(
+                                fontSize: 20,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              company,
+                              style: TextStyle(
+                                color: AppColors.getSecondaryTextColor(context),
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            _buildLocationRow(
+                              icon: Icons.location_on,
+                              iconColor: const Color(0xFF1E6B5C),
+                              title: location,
+                              subtitle: address,
+                              taskId: id,
+                            ),
+                            if (distance.isNotEmpty)
+                              Padding(
+                                padding: const EdgeInsets.only(left: 32),
+                                child: Text(
+                                  distance,
+                                  style: const TextStyle(
+                                    color: Color(0xFF1E6B5C),
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w500,
+                                  ),
+                                ),
+                              ),
+                            const SizedBox(height: 16),
+                            _buildLocationRow(
+                              icon: Icons.location_on_outlined,
+                              iconColor: Colors.orange,
+                              title: destination,
+                              subtitle: destinationAddress,
+                              taskId: id,
+                            ),
+                            const SizedBox(height: 24),
+                            if (type == 'AWAITING')
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: OutlinedButton(
+                                      onPressed: () {
+                                        _handleDeclineTask(id);
+                                        Navigator.pop(context);
+                                      },
+                                      style: OutlinedButton.styleFrom(
+                                        foregroundColor: Colors.red,
+                                        side: const BorderSide(color: Colors.red),
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                      ),
+                                      child: const Text('Reject'),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: () {
+                                        _handleAcceptTask(id);
+                                        Navigator.pop(context);
+                                      },
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: Theme.of(context).primaryColor,
+                                        foregroundColor: Colors.white,
+                                        padding: const EdgeInsets.symmetric(vertical: 12),
+                                      ),
+                                      child: const Text('Pickup Load'),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                          ],
+                        ),
                       ),
                     ),
-                    SizedBox(height: MediaQuery.of(context).padding.bottom + 16),
-                  ],
-                ),
+                  ),
+                ],
               ),
             ),
           ),
@@ -821,5 +890,22 @@ class _TasksPageState extends State<TasksPage> {
         ),
       ],
     );
+  }
+
+  Future<List<LatLng>> getRoutePoints(LatLng start, LatLng end) async {
+    final response = await http.get(Uri.parse(
+      'https://router.project-osrm.org/route/v1/driving/'
+      '${start.longitude},${start.latitude};'
+      '${end.longitude},${end.latitude}'
+      '?overview=full&geometries=polyline'
+    ));
+
+    if (response.statusCode == 200) {
+      final data = json.decode(response.body);
+      final String geometry = data['routes'][0]['geometry'];
+      final points = polylinePoints.decodePolyline(geometry);
+      return points.map((p) => LatLng(p.latitude, p.longitude)).toList();
+    }
+    return [start, end];
   }
 } 
