@@ -153,19 +153,23 @@ class _ResponsiveLayoutState extends State<ResponsiveLayout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: IndexedStack(
-        index: _selectedIndex,
-        children: [
-          const TasksPage(),
-          const TransactionsPage(),
-          ProfilePage(
-            isDarkMode: widget.isDarkMode,
-            onThemeToggle: widget.onThemeToggle,
-            currentLocale: widget.currentLocale,
-            onLocaleChange: widget.onLocaleChange,
-          ),
-        ],
-      ),
+      body: Builder(builder: (context) {
+        switch (_selectedIndex) {
+          case 0:
+            return const TasksPage();
+          case 1:
+            return const TransactionsPage();
+          case 2:
+            return ProfilePage(
+              isDarkMode: widget.isDarkMode,
+              onThemeToggle: widget.onThemeToggle,
+              currentLocale: widget.currentLocale,
+              onLocaleChange: widget.onLocaleChange,
+            );
+          default:
+            return const TasksPage();
+        }
+      }),
       bottomNavigationBar: NavigationBar(
         selectedIndex: _selectedIndex,
         onDestinationSelected: (int index) {
