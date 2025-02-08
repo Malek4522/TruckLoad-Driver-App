@@ -208,4 +208,10 @@ class Task {
       ),
     ];
   }
+
+  // Update color-related code in the Task class
+  static const Color defaultColor = Color(0xFF00359E); // Changed from green to blue #00359E
+
+  // For dark mode, we might want to use a slightly lighter shade of the same blue
+  static const Color darkModeColor = Color(0xFF1E4CAF); // Lighter shade of #00359E for better visibility in dark mode
 } 
