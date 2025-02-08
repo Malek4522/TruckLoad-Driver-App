@@ -77,8 +77,8 @@ class _MyAppState extends State<MyApp> {
       ],
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.primaryGreen,
-          primary: AppColors.primaryGreen,
+          seedColor: AppColors.primaryBlue,
+          primary: AppColors.primaryBlue,
           brightness: isDarkMode ? Brightness.dark : Brightness.light,
         ),
         scaffoldBackgroundColor: isDarkMode 

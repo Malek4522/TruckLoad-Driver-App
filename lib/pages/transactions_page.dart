@@ -388,7 +388,7 @@ class _TransactionsPageState extends State<TransactionsPage> with SingleTickerPr
     Color getStatusColor() {
       switch (status.toLowerCase()) {
         case 'completed':
-          return const Color(0xFF1E6B5C);
+          return AppColors.getAccentColor(context);
         case 'pending':
           return Colors.orange;
         default:
@@ -459,10 +459,10 @@ class _TransactionsPageState extends State<TransactionsPage> with SingleTickerPr
                       ),
                       Text(
                         amount,
-                        style: const TextStyle(
+                        style:  TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E6B5C),
+                          color: AppColors.getAccentColor(context),
                         ),
                       ),
                     ],
@@ -479,13 +479,13 @@ class _TransactionsPageState extends State<TransactionsPage> with SingleTickerPr
                               vertical: 4,
                             ),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1E6B5C).withAlpha(26),
+                              color: AppColors.getAccentColor(context).withAlpha(26),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: Text(
                               taskId,
-                              style: const TextStyle(
-                                color: Color(0xFF1E6B5C),
+                              style: TextStyle(
+                                color: AppColors.getAccentColor(context),
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
                               ),

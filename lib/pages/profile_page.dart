@@ -43,12 +43,12 @@ class _ProfilePageState extends State<ProfilePage> {
             Container(
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
-                color: const Color(0xFF1E6B5C).withOpacity(0.1),
+                color: AppColors.getAccentColor(context).withOpacity(0.1),
                 borderRadius: BorderRadius.circular(10),
               ),
               child: Icon(
                 icon,
-                color: const Color(0xFF1E6B5C),
+                color: AppColors.getAccentColor(context),
                 size: 20,
               ),
             ),
@@ -76,7 +76,7 @@ class _ProfilePageState extends State<ProfilePage> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E6B5C).withOpacity(0.1),
+                        color: AppColors.getAccentColor(context).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
@@ -127,7 +127,7 @@ class _ProfilePageState extends State<ProfilePage> {
               Container(
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: Theme.of(context).primaryColor,
+                  color: AppColors.getAccentColor(context),
                   borderRadius: const BorderRadius.only(
                     bottomLeft: Radius.circular(24),
                     bottomRight: Radius.circular(24),
@@ -323,9 +323,9 @@ class _ProfilePageState extends State<ProfilePage> {
                       _selectedLanguage.displayName,
                       icon: Icons.language_outlined,
                       trailing: PopupMenuButton<AppLanguage>(
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.arrow_drop_down,
-                          color: Color(0xFF1E6B5C),
+                          color: AppColors.getAccentColor(context),
                         ),
                         onSelected: (AppLanguage language) {
                           setState(() {
@@ -440,14 +440,14 @@ class _ProfilePageState extends State<ProfilePage> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF1E6B5C).withOpacity(0.1),
+                                color: AppColors.getAccentColor(context).withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 type.name,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 12,
-                                  color: Color(0xFF1E6B5C),
+                                  color: AppColors.getAccentColor(context),
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),

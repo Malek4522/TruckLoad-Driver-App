@@ -46,7 +46,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                           height: 80,
                           child: Icon(
                             Icons.location_on,
-                            color: Theme.of(context).primaryColor,
+                            color: AppColors.getAccentColor(context),
                             size: 40,
                           ),
                         ),
@@ -98,7 +98,7 @@ class _TaskDetailPageState extends State<TaskDetailPage> {
                   location: widget.task['location'],
                   address: widget.task['address'],
                   icon: Icons.location_on,
-                  color: Theme.of(context).primaryColor,
+                  color: AppColors.getAccentColor(context),
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8),

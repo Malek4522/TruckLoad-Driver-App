@@ -382,7 +382,7 @@ class _TasksPageState extends State<TasksPage> {
                                   points: routePoints.isEmpty 
                                       ? [task.pickupCoords, task.deliveryCoords] 
                                       : routePoints,
-                                  color: const Color(0xFF1E6B5C),
+                                  color: AppColors.getAccentColor(context),
                                   strokeWidth: 4.0,
                                 ),
                               ],
@@ -393,9 +393,9 @@ class _TasksPageState extends State<TasksPage> {
                                   point: task.pickupCoords,
                                   width: 80,
                                   height: 80,
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.location_on,
-                                    color: Color(0xFF1E6B5C),
+                                    color: AppColors.getAccentColor(context),
                                     size: 40,
                                   ),
                                 ),
@@ -413,7 +413,7 @@ class _TasksPageState extends State<TasksPage> {
                                       vertical: 4,
                                     ),
                                     decoration: BoxDecoration(
-                                      color: const Color(0xFF1E6B5C),
+                                      color: AppColors.getAccentColor(context),
                                       borderRadius: BorderRadius.circular(12),
                                       boxShadow: [
                                         BoxShadow(
@@ -437,7 +437,7 @@ class _TasksPageState extends State<TasksPage> {
                                   point: task.deliveryCoords,
                                   width: 80,
                                   height: 80,
-                                  child: const Icon(
+                                  child: Icon(
                                     Icons.flag,
                                     color: Colors.orange,
                                     size: 40,
@@ -640,10 +640,10 @@ class _TasksPageState extends State<TasksPage> {
                                     flex: 2,
                                     child: Text(
                                       '\$${task.amount.toStringAsFixed(2)}',
-                                      style: const TextStyle(
+                                      style:  TextStyle(
                                         fontSize: 16,
                                         fontWeight: FontWeight.bold,
-                                        color: Color(0xFF1E6B5C),
+                                        color: AppColors.getAccentColor(context),
                                       ),
                                       textAlign: TextAlign.end,
                                     ),
@@ -658,14 +658,14 @@ class _TasksPageState extends State<TasksPage> {
                             task.pickupLocation,
                             _formatDateTime(task.pickupDateTime),
                             Icons.location_on,
-                            const Color(0xFF1E6B5C),
+                            AppColors.getAccentColor(context),
                           ),
                           Padding(
                             padding: const EdgeInsets.only(left: 32),
                             child: Text(
                               task.distance,
-                              style: const TextStyle(
-                                color: Color(0xFF1E6B5C),
+                              style:  TextStyle(
+                                color: AppColors.getAccentColor(context),
                                 fontSize: 12,
                                 fontWeight: FontWeight.w500,
                               ),
@@ -689,14 +689,14 @@ class _TasksPageState extends State<TasksPage> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF1E6B5C).withOpacity(0.1),
+                                color: AppColors.getAccentColor(context).withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(8),
                               ),
                               child: Text(
                                 type.name,
-                                style: const TextStyle(
+                                style:TextStyle(
                                   fontSize: 12,
-                                  color: Color(0xFF1E6B5C),
+                                  color: AppColors.getAccentColor(context),
                                   fontWeight: FontWeight.w500,
                                 ),
                               ),
@@ -713,8 +713,7 @@ class _TasksPageState extends State<TasksPage> {
                               const SizedBox(width: 8),
                               Text(
                                 '+48 123 456 789',
-                                style: TextStyle(
-                                  color: AppColors.getTextColor(context),
+                                style: const TextStyle(
                                   fontSize: 14,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -763,7 +762,7 @@ class _TasksPageState extends State<TasksPage> {
                                       Navigator.pop(context);
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF1E6B5C),
+                                      backgroundColor: AppColors.getAccentColor(context),
                                       foregroundColor: Colors.white,
                                       padding: const EdgeInsets.symmetric(vertical: 16),
                                     ),
@@ -797,7 +796,7 @@ class _TasksPageState extends State<TasksPage> {
                                       Navigator.pop(context);
                                     },
                                     style: ElevatedButton.styleFrom(
-                                      backgroundColor: const Color(0xFF1E6B5C),
+                                      backgroundColor: AppColors.getAccentColor(context),
                                       foregroundColor: Colors.white,
                                       padding: const EdgeInsets.symmetric(vertical: 16),
                                     ),
@@ -828,7 +827,7 @@ class _TasksPageState extends State<TasksPage> {
           color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(16),
           border: isHighlighted ? Border.all(
-            color: Theme.of(context).primaryColor,
+            color: AppColors.getAccentColor(context),
             width: 2,
           ) : null,
           boxShadow: [
@@ -874,12 +873,8 @@ class _TasksPageState extends State<TasksPage> {
                         ),
                         child: Text(
                           task.status.displayName,
-                          style: TextStyle(
-                            color: task.status == 'Completed'
-                                ? Colors.green
-                                : task.status == 'In Progress'
-                                    ? Colors.orange
-                                    : Colors.blue,
+                          style: const TextStyle(
+                            color: Colors.green,
                             fontSize: 12,
                             fontWeight: FontWeight.bold,
                           ),
@@ -893,8 +888,8 @@ class _TasksPageState extends State<TasksPage> {
                     children: [
                       Text(
                         _formatDateTime(task.pickupDateTime),
-                        style: TextStyle(
-                          color: Theme.of(context).textTheme.bodyMedium?.color,
+                        style: const TextStyle(
+                          color: Colors.grey,
                         ),
                       ),
                       Text(
@@ -902,7 +897,7 @@ class _TasksPageState extends State<TasksPage> {
                         style: const TextStyle(
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
-                          color: Color(0xFF1E6B5C),
+                          color: Colors.green,
                         ),
                       ),
                     ],
@@ -915,7 +910,7 @@ class _TasksPageState extends State<TasksPage> {
                           Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: const Color(0xFF1E6B5C),
+                              color: AppColors.getAccentColor(context),
                               borderRadius: BorderRadius.circular(8),
                             ),
                             child: const Icon(
@@ -961,13 +956,13 @@ class _TasksPageState extends State<TasksPage> {
                                 vertical: 4,
                               ),
                               decoration: BoxDecoration(
-                                color: const Color(0xFF1E6B5C).withOpacity(0.1),
+                                color: AppColors.getAccentColor(context).withOpacity(0.1),
                                 borderRadius: BorderRadius.circular(4),
                               ),
                               child: Text(
                                 _formatDuration(task.estimatedDuration),
-                                style: const TextStyle(
-                                  color: Color(0xFF1E6B5C),
+                                style: TextStyle(
+                                  color: AppColors.getAccentColor(context),
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -994,14 +989,14 @@ class _TasksPageState extends State<TasksPage> {
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E6B5C).withOpacity(0.1),
+                        color: AppColors.getAccentColor(context).withOpacity(0.1),
                         borderRadius: BorderRadius.circular(8),
                       ),
                       child: Text(
                         type.name,
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontSize: 12,
-                          color: Color(0xFF1E6B5C),
+                          color: AppColors.getAccentColor(context),
                           fontWeight: FontWeight.w500,
                         ),
                       ),
@@ -1033,8 +1028,8 @@ class _TasksPageState extends State<TasksPage> {
             children: [
               Text(
                 title,
-                style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                style: const TextStyle(
+                  color: Colors.grey,
                   fontSize: 12,
                 ),
               ),
@@ -1047,8 +1042,8 @@ class _TasksPageState extends State<TasksPage> {
               ),
               Text(
                 datetime,
-                style: TextStyle(
-                  color: Theme.of(context).textTheme.bodyMedium?.color,
+                style: const TextStyle(
+                  color: Colors.grey,
                   fontSize: 12,
                 ),
               ),
