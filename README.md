@@ -36,18 +36,14 @@ This application serves as a platform for truck owners to find and manage load d
 
 Here are some screenshots of the application:
 
-![Screenshot 1](lib/screenshots/Screenshot_1741988446.png)
-
-
-![Screenshot 2](lib/screenshots/Screenshot_1741988454.png)
-
-![Screenshot 3](lib/screenshots/Screenshot_1741988470.png)
-
-![Screenshot 4](lib/screenshots/Screenshot_1741988475.png)
-
-![Screenshot 5](lib/screenshots/Screenshot_1741988479.png)
-
-![Screenshot 6](lib/screenshots/Screenshot_1741988500.png)
+<div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px;">
+  <img src="lib/screenshots/Screenshot_1741988446.png" width="200">
+  <img src="lib/screenshots/Screenshot_1741988454.png" width="200">
+  <img src="lib/screenshots/Screenshot_1741988470.png" width="200">
+  <img src="lib/screenshots/Screenshot_1741988475.png" width="200">
+  <img src="lib/screenshots/Screenshot_1741988479.png" width="200">
+  <img src="lib/screenshots/Screenshot_1741988500.png" width="200">
+</div>
 
 ## Getting Started
 
