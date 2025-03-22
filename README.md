@@ -76,18 +76,6 @@ flutter pub get
 flutter run
 ```
 
-## Development Resources
+## Contact
 
-For help getting started with Flutter development, check out these resources:
-
-- [Flutter Documentation](https://docs.flutter.dev/) - Official Flutter documentation
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+For any inquiries or support, please contact us at abdmalek69.2004@gmail.com.
