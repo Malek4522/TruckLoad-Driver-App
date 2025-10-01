@@ -78,4 +78,4 @@ flutter run
 
 ## Contact
 
-For any inquiries or support, please contact us at abdmalek69.2004@gmail.com.
+For any inquiries or support, please contact us at abdmalek.2004@outlook.com.
